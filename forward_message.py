@@ -1,8 +1,9 @@
+from telegram.ext import CommandHandler, MessageHandler
+from telegram.ext.filters import Text  # Filters yerine Text kullanacağız
 from telegram import Bot
-from telegram.ext import CommandHandler, MessageHandler, Filters, Application
-import os
 from dotenv import load_dotenv
-from get_x_updates import get_x_updates  # get_x_updates fonksiyonunu burada kullanabilirsiniz
+import os
+from get_x_updates import get_x_updates
 
 # .env dosyasını yükleyelim
 load_dotenv()
@@ -36,7 +37,7 @@ send_updates_handler = CommandHandler('getupdates', send_updates)
 application.add_handler(send_updates_handler)
 
 # Mesajları dinle
-message_handler = MessageHandler(Filters.text & ~Filters.command, forward_message)
+message_handler = MessageHandler(Text & ~Filters.command, forward_message)
 application.add_handler(message_handler)
 
 # Botu başlat
