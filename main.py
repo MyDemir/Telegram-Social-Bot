@@ -1,39 +1,47 @@
-from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters
 import os
 from dotenv import load_dotenv
-from get_x_updates import get_x_updates
-from forward_message import forward_message
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, CallbackContext
+from telegram.error import TelegramError
+from x_updates import get_twitter_updates
 
-# .env dosyasını yükle
+# .env dosyasındaki bilgileri yükle
 load_dotenv()
 
-# .env dosyasından TELEGRAM_BOT_TOKEN'ı al
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
-# Yeni sürümde Application kullanılır
-application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
-
 # '/start' komutu
-async def start(update: Update, context):
-    await update.message.reply_text("Bot çalışıyor! X (Twitter) kullanıcı adı girerek güncellemeleri alabilirsiniz.")
+def start(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text('Merhaba! Ben Telegram Social Bot V2.\nTwitter güncellemelerini almak için /get_x_updates [kullanıcı_adı] komutunu kullanabilirsiniz.')
 
-# '/get_updates' komutu, X (Twitter) güncellemelerini almak için
-async def get_updates(update: Update, context):
-    if len(context.args) == 0:
-        await update.message.reply_text("Lütfen bir X (Twitter) kullanıcı adı girin.")
-        return
+# '/get_x_updates' komutu
+def get_updates(update: Update, context: CallbackContext) -> None:
+    if len(context.args) > 0:
+        username = context.args[0]
+        updates = get_twitter_updates(username)
+        
+        # Eğer tweetler varsa, bunları Telegram'a gönderiyoruz
+        if "Hata" not in updates:
+            try:
+                update.message.reply_text(updates)  # Tweet içeriklerini Telegram'a gönder
+            except TelegramError as e:
+                update.message.reply_text(f"Telegram hatası: {e}")
+        else:
+            update.message.reply_text(updates)  # Eğer hata varsa, hata mesajını gönder
+    else:
+        update.message.reply_text('Lütfen bir kullanıcı adı girin.')
 
-    username = context.args[0]
-    updates = await get_x_updates(username)
-    await update.message.reply_text(updates)
+# Botu başlatma
+def main():
+    updater = Updater(TELEGRAM_BOT_TOKEN)
 
-# Komutları ekleyelim
-application.add_handler(CommandHandler('start', start))
-application.add_handler(CommandHandler('get_updates', get_updates))
+    dispatcher = updater.dispatcher
 
-# Mesajları dinle ve ilet
-application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, forward_message))
+    dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(CommandHandler("get_x_updates", get_updates))
 
-# Botu başlat
-application.run_polling()
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == '__main__':
+    main()
