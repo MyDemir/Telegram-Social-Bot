@@ -34,21 +34,12 @@ async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     user_id = update.message.from_user.id
     user_input = update.message.text.strip().split()
 
-    # Admin kontrolü
-    try:
-        chat_member = await update.message.chat.get_member(user_id)
-        if chat_member.status not in ["administrator", "creator"]:
-            await update.message.reply_text('Bu kanalda admin değilsiniz. Admin olmalısınız.')
-            return
-    except BadRequest as e:
-        await update.message.reply_text('Kanal üyeliğinizi kontrol edemedim.')
-        return
-
-    # Manuel girilen kanal ID'leri işleme
+    # Kanal ID'lerini manuel girme (Örnek: /set_channels @kanal1 @kanal2)
     if len(user_input) == 3 and user_input[0] == '/set_channels':
         source_channel = user_input[1]
         target_channel = user_input[2]
 
+        # Kullanıcı bilgilerini kaydetme
         user_info[user_id] = {
             "source_channel": source_channel,
             "target_channel": target_channel
