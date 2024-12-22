@@ -21,7 +21,7 @@ def send_updates(update, context):
     # Kullanıcının yazdığı tweet kullanıcısının adı
     username = context.args[0]
     
-    # get_x_updates fonksiyonu burada olmalı
+    # get_x_updates fonksiyonu burada kullanılacak
     updates = get_x_updates(username)
     
     # Kullanıcıya güncellemeleri gönder
