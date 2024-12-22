@@ -6,7 +6,7 @@ from telegram_bot import (
     set_twitter_target,
     forward_twitter_updates,
 )
-from bot.config import TELEGRAM_BOT_TOKEN
+from config import TELEGRAM_BOT_TOKEN
 
 def main():
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
