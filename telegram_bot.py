@@ -36,7 +36,8 @@ async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     user_id = update.message.from_user.id
     
     # Admin kontrolü
-    if not update.message.chat.get_member(user_id).status in ["administrator", "creator"]:
+    member = await update.message.chat.get_member(user_id)
+    if member.status not in ["administrator", "creator"]:
         await update.message.reply_text('Bu kanalda admin değilsiniz. Admin olmalısınız.')
         return
 
@@ -91,4 +92,24 @@ async def forward_twitter_updates(update: Update, context: ContextTypes.DEFAULT_
     twitter_updates = get_twitter_updates(twitter_target)
     await update.message.reply_text(
         f"Twitter hedefinden alınan güncellemeler:\n{twitter_updates}"
-                      )
+    )
+
+# Ana fonksiyon
+def main() -> None:
+    application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
+
+    # Handler'lar
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("set_channels", set_channels))
+
+    # Text mesajlarını alıyoruz, fakat komutları hariç tutuyoruz
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, forward_messages))
+
+    # Twitter güncellemelerini almak için handler
+    application.add_handler(CommandHandler("forward_twitter_updates", forward_twitter_updates))
+
+    # Botu çalıştır
+    application.run_polling()
+
+if __name__ == "__main__":
+    main()
