@@ -1,4 +1,3 @@
-# telegram_bot.py
 import json
 from telegram import Update
 from telegram.ext import (
