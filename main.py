@@ -1,37 +1,31 @@
+# main.py
+import asyncio
+import os
+from dotenv import load_dotenv
+from telegram_bot import start, set_channels, forward_messages, forward_twitter_updates
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
-from telegram_bot import (
-    start,
-    set_source_group,
-    set_target_group,
-    set_twitter_target,
-    forward_twitter_updates,
-    handle_group_addition,
-)
-from config import TELEGRAM_BOT_TOKEN
 
-def main():
-    # Telegram bot uygulamasını başlatıyoruz
+# .env dosyasını yükleme
+load_dotenv()
+
+# TELEGRAM_BOT_TOKEN çevresel değişkeninden bot tokenini al
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+
+if not TELEGRAM_BOT_TOKEN:
+    raise ValueError("Bot tokeni .env dosyasından alınamadı. Lütfen TELEGRAM_BOT_TOKEN değeri ekleyin.")
+
+async def main() -> None:
+    # Telegram botunun token'ını .env dosyasından alıyoruz
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
-    # Start komutunun handler'ı
+    # Handler'lar
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("set_channels", set_channels))
+    application.add_handler(MessageHandler(filters.Text & ~filters.Command, forward_messages))
+    application.add_handler(CommandHandler("forward_twitter_updates", forward_twitter_updates))
 
-    # Kullanıcıdan gelen metin mesajlarını işlemek için handler'lar
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, set_source_group))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, set_target_group))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, set_twitter_target))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, forward_twitter_updates))
+    # Botu çalıştır
+    await application.run_polling()
 
-    # Kaynak grup ekleme handler'ı
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND,
-                          lambda update, context: handle_group_addition(update, context, 'source')))
-
-    # Hedef grup ekleme handler'ı
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND,
-                          lambda update, context: handle_group_addition(update, context, 'target')))
-
-    # Polling ile botun sürekli çalışmasını sağlıyoruz
-    application.run_polling()
-
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    asyncio.run(main())
