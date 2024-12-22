@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 from telegram_bot import start, set_channels, forward_messages, forward_twitter_updates
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
+import asyncio
 
 # .env dosyasını yükleme
 load_dotenv()
@@ -20,18 +21,13 @@ async def main() -> None:
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("set_channels", set_channels))
     
-    # Text mesajlarını alıyoruz, fakat komutları manuel olarak kontrol ediyoruz
-    application.add_handler(MessageHandler(filters.TEXT, lambda update, context: handle_message_if_not_command(update, context)))
+    # Text mesajlarını alıyoruz, fakat komutları hariç tutuyoruz
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, forward_messages))
     
     application.add_handler(CommandHandler("forward_twitter_updates", forward_twitter_updates))
 
     # Botu çalıştır
     await application.run_polling()
 
-async def handle_message_if_not_command(update: Update, context):
-    if not update.message.text.startswith('/'):  # Komutla başlamayan mesajlar için
-        await forward_messages(update, context)
-
 if __name__ == "__main__":
-    import asyncio
     asyncio.run(main())
