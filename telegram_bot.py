@@ -1,4 +1,4 @@
-from telegram import Update
+from telegram import Update, Chat
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
@@ -74,3 +74,28 @@ async def forward_twitter_updates(update: Update, context: ContextTypes.DEFAULT_
     await update.message.reply_text(
         f"Twitter hedefinden alınan güncellemeler:\n{twitter_updates}"
     )
+
+# Grup ID doğrulama fonksiyonu
+async def validate_group(update, context, group_type):
+    chat_id = update.message.text.strip()
+    chat_info = None
+
+    try:
+        # Kanal veya grup bilgilerini çekmeye çalış
+        chat_info = await context.bot.get_chat(chat_id)
+    except Exception as e:
+        await update.message.reply_text(f"{group_type.capitalize()} grup bulunamadı. Lütfen geçerli bir ID girin.")
+        return
+
+    # Eğer geçerliyse ayarla
+    if chat_info and isinstance(chat_info, Chat):
+        if group_type == 'source':
+            context.user_data['source_group'] = chat_id
+            await update.message.reply_text(f"Kaynak grup '{chat_info.title}' olarak ayarlandı.")
+        elif group_type == 'target':
+            target_groups = context.user_data.get('target_groups', [])
+            target_groups.append(chat_id)
+            context.user_data['target_groups'] = target_groups
+            await update.message.reply_text(f"Hedef grup '{chat_info.title}' olarak eklendi.")
+    else:
+        await update.message.reply_text(f"{group_type.capitalize()} grup ayarlanamadı. Lütfen tekrar deneyin.")
