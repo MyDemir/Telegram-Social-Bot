@@ -1,4 +1,3 @@
-import asyncio
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 import os
@@ -12,7 +11,7 @@ load_dotenv()
 # .env dosyasından TELEGRAM_BOT_TOKEN'ı al
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
-# Botu başlatmak için gerekli ayarlar
+# Yeni sürümde Application kullanılır
 application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
 # '/start' komutu
@@ -26,21 +25,15 @@ async def get_updates(update: Update, context):
         return
 
     username = context.args[0]
-    updates = get_x_updates(username)
+    updates = await get_x_updates(username)
     await update.message.reply_text(updates)
-
-# Mesajı iletmek için mesaj işleyici
-async def forward_message(update: Update, context):
-    await context.bot.forward_message(chat_id='@your_target_channel_or_group',
-                                      from_chat_id=update.message.chat_id,
-                                      message_id=update.message.message_id)
 
 # Komutları ekleyelim
 application.add_handler(CommandHandler('start', start))
 application.add_handler(CommandHandler('get_updates', get_updates))
+
+# Mesajları dinle ve ilet
 application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, forward_message))
 
 # Botu başlat
-if __name__ == "__main__":
-    # async run_polling'yi başlatmak için asyncio kullanıyoruz
-    asyncio.run(application.run_polling())
+application.run_polling()
