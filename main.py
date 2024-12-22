@@ -17,13 +17,8 @@ def main():
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, set_target_group))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, set_twitter_target))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, forward_twitter_updates))
-      # Kaynak grup ekleme
+    # Kaynak grup ekleme
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND,
                           lambda update, context: handle_group_addition(update, context, 'source')))
-    application.run_polling()
-       # Hedef grup ekleme
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND,
-                          lambda update, context: handle_group_addition(update, context, 'target')))
-
-if __name__ == '__main__':
-    main()
+    # Hedef grup ekleme
+    application.add_handler
