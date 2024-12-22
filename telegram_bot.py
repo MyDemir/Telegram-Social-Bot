@@ -37,7 +37,6 @@ async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     # Admin kontrolü
     user_status = update.message.chat.get_member(user_id).status
-
     if user_status not in ["administrator", "creator"]:
         await update.message.reply_text('Bu kanalda admin değilsiniz. Admin olmalısınız.')
         return
@@ -60,6 +59,11 @@ async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         f"Kaynak kanal: {source_channel}\nHedef kanal: {target_channel} olarak ayarlandı."
     )
 
+    # Kullanıcıya kanal bilgilerini doğrulama mesajı gönder
+    await update.message.reply_text(
+        f"Kaydedilen bilgiler:\nKaynak Kanal: {source_channel}\nHedef Kanal: {target_channel}"
+    )
+
 # Mesajları kopyalamak için handler
 async def forward_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
@@ -75,6 +79,7 @@ async def forward_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     try:
         if update.message.chat.id == source_channel:
             await context.bot.send_message(target_channel, update.message.text)
+            await update.message.reply_text(f"Mesaj başarıyla {target_channel} kanalına iletildi.")
     except BadRequest as e:
         await update.message.reply_text(f"Bir hata oluştu: {e}")
 
@@ -93,4 +98,4 @@ async def forward_twitter_updates(update: Update, context: ContextTypes.DEFAULT_
     twitter_updates = get_twitter_updates(twitter_target)
     await update.message.reply_text(
         f"Twitter hedefinden alınan güncellemeler:\n{twitter_updates}"
-    )
+        )
