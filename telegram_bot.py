@@ -62,7 +62,11 @@ async def forward_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     
     # Mesajları hedef kanala ilet
     try:
+        # Mesajın kaynak kanal ID'si ile eşleşip eşleşmediğini kontrol et
         if update.message.chat.id == source_channel:
             await context.bot.send_message(target_channel, update.message.text)
+            await update.message.reply_text(f"Mesaj {source_channel} kanalından {target_channel} kanalına iletildi.")
+        else:
+            await update.message.reply_text(f"Bu mesaj {source_channel} kanalından gelmiyor.")
     except BadRequest as e:
         await update.message.reply_text(f"Bir hata oluştu: {e}")
