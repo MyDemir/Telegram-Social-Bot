@@ -1,6 +1,5 @@
 from telegram import Update
 from telegram.ext import CallbackContext
-from telegram.error import TelegramError
 from bot.twitter import get_twitter_updates
 from bot.config import TELEGRAM_BOT_TOKEN
 
@@ -56,23 +55,3 @@ def forward_twitter_updates(update: Update, context: CallbackContext) -> None:
 
     twitter_updates = get_twitter_updates(twitter_target)
     update.message.reply_text(f"Twitter hedefinden alınan güncellemeler:\n{twitter_updates}")
-
-def forward_message(update: Update, context: CallbackContext) -> None:
-    user_id = update.message.from_user.id
-    if user_id not in user_info:
-        update.message.reply_text('Lütfen önce kaynak ve hedef grup ID\'lerini ayarlayın.')
-        return
-    
-    source_group_id = user_info[user_id].get('source_group')
-    target_group_id = user_info[user_id].get('target_group')
-
-    if update.message.chat_id == int(source_group_id):
-        try:
-            context.bot.forward_message(chat_id=target_group_id, 
-                                        from_chat_id=update.message.chat_id, 
-                                        message_id=update.message.message_id)
-            update.message.reply_text(f"Mesaj {target_group_id} grubuna aktarıldı.")
-        except TelegramError as e:
-            update.message.reply_text(f"Mesaj aktarma hatası: {e}")
-    else:
-        update.message.reply_text('Bu grup, kaynak grup değil. Lütfen doğru gruptan mesaj gönderin.')
