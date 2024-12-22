@@ -3,11 +3,17 @@ from telegram import Update
 import logging
 from get_x_updates import get_x_updates
 from forward_message import forward_message
-from config import TELEGRAM_BOT_TOKEN
+import os
+from dotenv import load_dotenv
+
+# .env dosyasını yükle
+load_dotenv()
+
+# .env dosyasından TELEGRAM_BOT_TOKEN'ı al
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 # Botu başlatmak için gerekli ayarlar
-from config import TELEGRAM_BOT_TOKEN
-updater = Updater(token=API_KEY, use_context=True)
+updater = Updater(token=TELEGRAM_BOT_TOKEN, use_context=True)
 dispatcher = updater.dispatcher
 
 # Botu başlat
@@ -32,5 +38,6 @@ dispatcher.add_handler(CommandHandler('start', start))
 dispatcher.add_handler(CommandHandler('get_updates', get_updates))
 dispatcher.add_handler(MessageHandler(Filters.text, forward_message))
 
+# Loglama yapılandırması
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
