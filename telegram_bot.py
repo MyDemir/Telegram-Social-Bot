@@ -1,13 +1,12 @@
 import json
 from telegram import Update
 from telegram.ext import (
-    ApplicationBuilder,
     CommandHandler,
     MessageHandler,
     filters,
     ContextTypes,
 )
-from telegram.error import BadRequest, TelegramError
+from telegram.error import BadRequest
 from twitter import get_twitter_updates  # Twitter güncellemelerini almak için
 
 # Kullanıcı bilgilerini saklayacak JSON dosyasını açma
@@ -28,16 +27,16 @@ user_info = load_user_info()
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
         'Merhaba! Bot, kaynak kanal ile hedef kanal arasında mesaj kopyalayacak.'
-        ' İlk olarak, iki kanal ID\'si veya kullanıcı adı girmeniz gerekecek.'
+        ' İlk olarak, iki kanal ID\'si veya kullanıcı adı girmeniz gerekecek. '
+        'Örnek: /set_channels @kaynakkanal @hedefkanal'
     )
 
-# Kanal ID'si veya kullanıcı adı al ve doğrula
+# Kanal ID'si veya kullanıcı adı al
 async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
-
+    
     # Admin kontrolü
-    user_status = update.message.chat.get_member(user_id).status
-    if user_status not in ["administrator", "creator"]:
+    if not update.message.chat.get_member(user_id).status in ["administrator", "creator"]:
         await update.message.reply_text('Bu kanalda admin değilsiniz. Admin olmalısınız.')
         return
 
@@ -45,31 +44,19 @@ async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     user_input = update.message.text.strip().split()
     
     if len(user_input) != 2:
-        await update.message.reply_text('Lütfen iki kanal ID\'si veya kullanıcı adı girin.')
+        await update.message.reply_text('Lütfen iki kanal ID\'si veya kullanıcı adı girin. Örnek: /set_channels @kaynakkanal @hedefkanal')
         return
 
     source_channel = user_input[0]
     target_channel = user_input[1]
 
-    # Kanal doğrulama işlemi
-    try:
-        # Get chat information for source and target channels
-        source_chat = await context.bot.get_chat(source_channel)
-        target_chat = await context.bot.get_chat(target_channel)
+    # Kanal bilgilerini kaydet
+    user_info[user_id] = {"source_channel": source_channel, "target_channel": target_channel}
+    save_user_info(user_info)
 
-        # Eğer doğrulama başarılıysa, kanal bilgilerini kaydet
-        user_info[user_id] = {"source_channel": source_channel, "target_channel": target_channel}
-        save_user_info(user_info)
-
-        await update.message.reply_text(
-            f"Kaynak kanal: {source_channel}\nHedef kanal: {target_channel} olarak ayarlandı."
-        )
-        await update.message.reply_text(
-            f"Kaydedilen bilgiler:\nKaynak Kanal: {source_channel}\nHedef Kanal: {target_channel}"
-        )
-
-    except TelegramError as e:
-        await update.message.reply_text(f"Kanal doğrulaması başarısız oldu: {e}")
+    await update.message.reply_text(
+        f"Kaynak kanal: {source_channel}\nHedef kanal: {target_channel} olarak ayarlandı."
+    )
 
 # Mesajları kopyalamak için handler
 async def forward_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -86,7 +73,6 @@ async def forward_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     try:
         if update.message.chat.id == source_channel:
             await context.bot.send_message(target_channel, update.message.text)
-            await update.message.reply_text(f"Mesaj başarıyla {target_channel} kanalına iletildi.")
     except BadRequest as e:
         await update.message.reply_text(f"Bir hata oluştu: {e}")
 
@@ -105,4 +91,4 @@ async def forward_twitter_updates(update: Update, context: ContextTypes.DEFAULT_
     twitter_updates = get_twitter_updates(twitter_target)
     await update.message.reply_text(
         f"Twitter hedefinden alınan güncellemeler:\n{twitter_updates}"
-    )
+                      )
