@@ -1,5 +1,5 @@
 from telegram import Update
-from telegram.ext import CallbackContext
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from bot.twitter import get_twitter_updates
 from bot.config import TELEGRAM_BOT_TOKEN
 
