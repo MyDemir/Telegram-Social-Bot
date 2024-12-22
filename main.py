@@ -3,10 +3,10 @@ from telegram import Update
 import logging
 from get_x_updates import get_x_updates
 from forward_message import forward_message
-from config import API_KEY
+from config import TELEGRAM_BOT_TOKEN
 
 # Botu başlatmak için gerekli ayarlar
-from config import API_KEY
+from config import TELEGRAM_BOT_TOKEN
 updater = Updater(token=API_KEY, use_context=True)
 dispatcher = updater.dispatcher
 
