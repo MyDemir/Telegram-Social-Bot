@@ -1,10 +1,7 @@
-from telegram.ext import CommandHandler, MessageHandler
-from telegram.ext.filters import Text  # Filters yerine Text kullanıyoruz
 from telegram import Bot
-from telegram.ext import Application  # Application importunu ekliyoruz
+from telegram.ext import CommandHandler, MessageHandler, filters, Application
 import os
 from dotenv import load_dotenv
-from get_x_updates import get_x_updates
 
 # .env dosyasını yükleyelim
 load_dotenv()
@@ -20,25 +17,26 @@ bot = Bot(token=TELEGRAM_BOT_TOKEN)
 TARGET_CHANNEL_ID = '@your_target_channel_or_group'
 
 # X güncellemelerini Telegram kanalına gönder
-async def send_updates(update, context):
+def send_updates(update, context):
     # Kullanıcının yazdığı tweet kullanıcısının adı
     username = context.args[0]
-
+    
+    # get_x_updates fonksiyonu burada kullanılacak
     updates = get_x_updates(username)
-
+    
     # Kullanıcıya güncellemeleri gönder
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=updates)
+    context.bot.send_message(chat_id=update.effective_chat.id, text=updates)
 
 # Mesajları dinle ve ilet
-async def forward_message(update, context):
-    await context.bot.forward_message(chat_id=TARGET_CHANNEL_ID, from_chat_id=update.message.chat_id, message_id=update.message.message_id)
+def forward_message(update, context):
+    context.bot.forward_message(chat_id=TARGET_CHANNEL_ID, from_chat_id=update.message.chat_id, message_id=update.message.message_id)
 
 # Komutları ekleyelim
 send_updates_handler = CommandHandler('getupdates', send_updates)
 application.add_handler(send_updates_handler)
 
 # Mesajları dinle
-message_handler = MessageHandler(Text & ~Filters.command, forward_message)
+message_handler = MessageHandler(filters.TEXT & ~filters.COMMAND, forward_message)
 application.add_handler(message_handler)
 
 # Botu başlat
