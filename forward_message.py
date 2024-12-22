@@ -1,5 +1,5 @@
 from telegram import Bot
-from telegram.ext import CommandHandler, MessageHandler, Filters, Updater
+from telegram.ext import CommandHandler, MessageHandler, Filters, Application
 import os
 from dotenv import load_dotenv
 
@@ -10,8 +10,7 @@ load_dotenv()
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 
 # Telegram Botunu Başlat
-updater = Updater(token=TELEGRAM_BOT_TOKEN, use_context=True)
-dispatcher = updater.dispatcher
+application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 
 # Hedef kanalın ID'sini buraya yazıyoruz (başka bir grup veya kanal)
@@ -22,8 +21,10 @@ def send_updates(update, context):
     # Kullanıcının yazdığı tweet kullanıcısının adı
     username = context.args[0]
     
+    # get_x_updates fonksiyonu burada olmalı
     updates = get_x_updates(username)
     
+    # Kullanıcıya güncellemeleri gönder
     context.bot.send_message(chat_id=update.effective_chat.id, text=updates)
 
 # Mesajları dinle ve ilet
@@ -32,12 +33,11 @@ def forward_message(update, context):
 
 # Komutları ekleyelim
 send_updates_handler = CommandHandler('getupdates', send_updates)
-dispatcher.add_handler(send_updates_handler)
+application.add_handler(send_updates_handler)
 
 # Mesajları dinle
 message_handler = MessageHandler(Filters.text & ~Filters.command, forward_message)
-dispatcher.add_handler(message_handler)
+application.add_handler(message_handler)
 
 # Botu başlat
-updater.start_polling()
-updater.idle()
+application.run_polling()
