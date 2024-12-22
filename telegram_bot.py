@@ -99,3 +99,7 @@ async def validate_group(update, context, group_type):
             await update.message.reply_text(f"Hedef grup '{chat_info.title}' olarak eklendi.")
     else:
         await update.message.reply_text(f"{group_type.capitalize()} grup ayarlanamadı. Lütfen tekrar deneyin.")
+
+# Grup ekleme komutu için handler
+async def handle_group_addition(update, context, group_type):
+    await validate_group(update, context, group_type)
