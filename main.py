@@ -5,6 +5,7 @@ from telegram_bot import (
     set_target_group,
     set_twitter_target,
     forward_twitter_updates,
+    handle_group_addition,
 )
 from config import TELEGRAM_BOT_TOKEN
 
@@ -16,8 +17,13 @@ def main():
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, set_target_group))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, set_twitter_target))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, forward_twitter_updates))
-
+      # Kaynak grup ekleme
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND,
+                          lambda update, context: handle_group_addition(update, context, 'source')))
     application.run_polling()
+       # Hedef grup ekleme
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND,
+                          lambda update, context: handle_group_addition(update, context, 'target')))
 
 if __name__ == '__main__':
     main()
