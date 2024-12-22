@@ -33,8 +33,8 @@ if __name__ == "__main__":
     """
 import os
 from dotenv import load_dotenv
-from telegram_bot import start, set_channels, forward_messages, forward_twitter_updates
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, CallbackQueryHandler
+from telegram_bot import start, set_channels, forward_messages, forward_twitter_updates, button_callback
 
 # .env dosyasını yükleme
 load_dotenv()
@@ -52,6 +52,7 @@ def main() -> None:
     # Handler'lar
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("set_channels", set_channels))
+    application.add_handler(CallbackQueryHandler(button_callback))
     
     # Text mesajlarını alıyoruz, fakat komutları hariç tutuyoruz
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, forward_messages))
