@@ -19,13 +19,15 @@ async def main() -> None:
     # Handler'lar
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("set_channels", set_channels))
-    application.add_handler(MessageHandler(filters.Text & ~filters.Command, forward_messages))
+    
+    # Text mesajlarını alıyoruz, fakat komutları hariç tutuyoruz
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, forward_messages))
+    
     application.add_handler(CommandHandler("forward_twitter_updates", forward_twitter_updates))
 
     # Botu çalıştır
     await application.run_polling()
 
 if __name__ == "__main__":
-    # asyncio.run(main()) yerine direkt application.run_polling() kullanıyoruz
     import asyncio
     asyncio.run(main())
