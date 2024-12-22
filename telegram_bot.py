@@ -6,8 +6,8 @@ from telegram.ext import (
     filters,  # filters artık küçük harfle import ediliyor
     ContextTypes,
 )
-from bot.twitter import get_twitter_updates
-from bot.config import TELEGRAM_BOT_TOKEN
+from twitter import get_twitter_updates
+from config import TELEGRAM_BOT_TOKEN
 
 user_info = {}
 
