@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 from telegram_bot import start, set_channels, forward_messages, forward_twitter_updates
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
+import asyncio
 
 # .env dosyasını yükleme
 load_dotenv()
@@ -21,7 +22,7 @@ async def main() -> None:
     application.add_handler(CommandHandler("set_channels", set_channels))
     
     # Text mesajlarını alıyoruz, fakat komutları hariç tutuyoruz
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, forward_messages))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.Command, forward_messages))
     
     application.add_handler(CommandHandler("forward_twitter_updates", forward_twitter_updates))
 
@@ -29,5 +30,5 @@ async def main() -> None:
     await application.run_polling()
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
