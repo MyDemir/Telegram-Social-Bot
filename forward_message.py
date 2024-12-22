@@ -1,5 +1,5 @@
 from telegram import Bot
-from telegram.ext import Application, MessageHandler, filters
+from telegram.ext import Application, CommandHandler, MessageHandler, filters
 import os
 from dotenv import load_dotenv
 from get_x_updates import get_x_updates
