@@ -36,7 +36,9 @@ async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     user_id = update.message.from_user.id
 
     # Admin kontrolü
-    if not update.message.chat.get_member(user_id).status in ["administrator", "creator"]:
+    user_status = update.message.chat.get_member(user_id).status
+
+    if user_status not in ["administrator", "creator"]:
         await update.message.reply_text('Bu kanalda admin değilsiniz. Admin olmalısınız.')
         return
 
