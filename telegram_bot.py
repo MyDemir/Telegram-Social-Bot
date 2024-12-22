@@ -1,30 +1,20 @@
-import json
 from telegram import Update, Chat
-from telegram.ext import (
-    CommandHandler,
-    MessageHandler,
-    filters,
-    ContextTypes,
-)
+from telegram.ext import ContextTypes
 from twitter import get_twitter_updates
 from config import TELEGRAM_BOT_TOKEN
 
-USER_DATA_FILE = 'user_data.json'
+user_info = {}
 
-# Kullanıcı verilerini JSON dosyasına kaydetme
-def save_user_data(user_info):
-    with open(USER_DATA_FILE, 'w') as f:
-        json.dump(user_info, f, indent=4)
-
-# Kullanıcı verilerini JSON dosyasından okuma
-def load_user_data():
+# Admin kontrolü fonksiyonu
+async def is_admin(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id: str) -> bool:
     try:
-        with open(USER_DATA_FILE, 'r') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return {}
-
-user_info = load_user_data()
+        # Kanalın adminlerini alıyoruz
+        admins = await context.bot.get_chat_administrators(chat_id)
+        # Kullanıcı adminse True döner
+        return any(admin.user.id == update.message.from_user.id for admin in admins)
+    except Exception as e:
+        await update.message.reply_text("Admin bilgilerine ulaşılamadı. Lütfen tekrar deneyin.")
+        return False
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
@@ -34,10 +24,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def set_source_group(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
-    source_group_id = update.message.text
+    source_group_id = update.message.text.strip()
 
+    # Admin kontrolü
+    if not await is_admin(update, context, source_group_id):
+        await update.message.reply_text('Bu işlem için admin olmanız gerekmektedir.')
+        return
+
+    # Kaynak grup ID'sini kaydediyoruz
     user_info[user_id] = {'source_group': source_group_id}
-    save_user_data(user_info)
     
     await update.message.reply_text(
         f"Kaynak grup {source_group_id} olarak ayarlandı.\nŞimdi hedef grup ID'sini girin."
@@ -49,9 +44,14 @@ async def set_target_group(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         await update.message.reply_text('Lütfen önce kaynak grup ID\'sini girin.')
         return
 
-    target_group_id = update.message.text
+    target_group_id = update.message.text.strip()
+
+    # Admin kontrolü
+    if not await is_admin(update, context, target_group_id):
+        await update.message.reply_text('Bu işlem için admin olmanız gerekmektedir.')
+        return
+
     user_info[user_id]['target_group'] = target_group_id
-    save_user_data(user_info)
 
     await update.message.reply_text(
         f"Hedef grup {target_group_id} olarak ayarlandı.\n"
@@ -66,9 +66,8 @@ async def set_twitter_target(update: Update, context: ContextTypes.DEFAULT_TYPE)
         )
         return
 
-    twitter_target = update.message.text
+    twitter_target = update.message.text.strip()
     user_info[user_id]['twitter_target'] = twitter_target
-    save_user_data(user_info)
 
     await update.message.reply_text(
         f"Twitter hedefi {twitter_target} olarak ayarlandı."
@@ -94,7 +93,6 @@ async def forward_twitter_updates(update: Update, context: ContextTypes.DEFAULT_
         f"Twitter hedefinden alınan güncellemeler:\n{twitter_updates}"
     )
 
-# Grup ID doğrulama fonksiyonu
 async def validate_group(update, context, group_type):
     chat_id = update.message.text.strip()
     chat_info = None
@@ -119,6 +117,5 @@ async def validate_group(update, context, group_type):
     else:
         await update.message.reply_text(f"{group_type.capitalize()} grup ayarlanamadı. Lütfen tekrar deneyin.")
 
-# Grup ekleme komutu için handler
 async def handle_group_addition(update, context, group_type):
     await validate_group(update, context, group_type)
