@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 
 def get_x_updates(username):
-    x_url = f"https://nitter.poast.org/{username}"  # X (Twitter) kullanıcı ismi
+    x_url = f"https://nitter.poast.org/{username}"  # Nitter kullanarak X (Twitter) kullanıcı ismi
     response = requests.get(x_url)
 
     if response.status_code == 200:
