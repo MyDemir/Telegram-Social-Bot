@@ -1,7 +1,9 @@
-from telegram import Update, Chat
+from telegram import Update
 from telegram.ext import ContextTypes
 from config import TELEGRAM_BOT_TOKEN
+from twitter import get_twitter_updates
 
+# Kullanıcı bilgilerini tutan sözlük
 user_info = {}
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -12,12 +14,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def set_source_group(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
-    if user_id not in user_info:
-        user_info[user_id] = {}
+    
+    # Eğer kullanıcı daha önce giriş yaptıysa, devam et
+    if user_id in user_info and 'source_group' in user_info[user_id]:
+        await update.message.reply_text(f"Kaynak grup {user_info[user_id]['source_group']} zaten ayarlandı.")
+        return
 
     # Kaynak grup bilgilerini al
     source_group_id = update.message.text
-    user_info[user_id]['source_group'] = source_group_id
+    user_info[user_id] = {'source_group': source_group_id}
 
     await update.message.reply_text(
         f"Kaynak grup {source_group_id} olarak ayarlandı.\nŞimdi hedef grup ID'sini girin."
@@ -74,6 +79,7 @@ async def forward_twitter_updates(update: Update, context: ContextTypes.DEFAULT_
         f"Twitter hedefinden alınan güncellemeler:\n{twitter_updates}"
     )
 
+# Grup ID doğrulama fonksiyonu
 async def validate_group(update, context, group_type):
     chat_id = update.message.text.strip()
     chat_info = None
