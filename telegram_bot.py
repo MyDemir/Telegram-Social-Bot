@@ -1,3 +1,5 @@
+# telegram_bot.py
+import json
 from telegram import Update
 from telegram.ext import (
     ApplicationBuilder,
@@ -6,89 +8,88 @@ from telegram.ext import (
     filters,
     ContextTypes,
 )
-from twitter import get_twitter_updates
-from config import TELEGRAM_BOT_TOKEN
+from telegram.error import BadRequest
+from twitter import get_twitter_updates  # Twitter güncellemelerini almak için
 
-user_info = {}
+# Kullanıcı bilgilerini saklayacak JSON dosyasını açma
+def load_user_info():
+    try:
+        with open("user_info.json", "r") as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return {}
 
+def save_user_info(user_info):
+    with open("user_info.json", "w") as file:
+        json.dump(user_info, file, indent=4)
+
+user_info = load_user_info()
+
+# Start komutu
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
-        'Merhaba! Ben Telegram Social Bot V2.\n'
-        'Mesaj aktarımı yapmak için kaynak ve hedef grup bilgilerini girebilirsiniz.'
+        'Merhaba! Bot, kaynak kanal ile hedef kanal arasında mesaj kopyalayacak.'
+        ' İlk olarak, iki kanal ID\'si veya kullanıcı adı girmeniz gerekecek.'
     )
 
-# Kaynak grup ayarlama fonksiyonu
-async def set_source_group(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+# Kanal ID'si veya kullanıcı adı al
+async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
 
-    # Eğer kullanıcı zaten kaynak grubu belirlemişse, ilerleyelim
-    if 'source_group' in user_info.get(user_id, {}):
+    # Admin kontrolü
+    if not update.message.chat.get_member(user_id).status in ["administrator", "creator"]:
+        await update.message.reply_text('Bu kanalda admin değilsiniz. Admin olmalısınız.')
         return
 
-    source_group_id = update.message.text.strip()
-    user_info.setdefault(user_id, {})['source_group'] = source_group_id
+    # Kanal ID'lerini al
+    user_input = update.message.text.strip().split()
     
+    if len(user_input) != 2:
+        await update.message.reply_text('Lütfen iki kanal ID\'si veya kullanıcı adı girin.')
+        return
+
+    source_channel = user_input[0]
+    target_channel = user_input[1]
+
+    # Kanal bilgilerini kaydet
+    user_info[user_id] = {"source_channel": source_channel, "target_channel": target_channel}
+    save_user_info(user_info)
+
     await update.message.reply_text(
-        f"Kaynak grup {source_group_id} olarak ayarlandı.\nŞimdi hedef grup ID'sini girin."
+        f"Kaynak kanal: {source_channel}\nHedef kanal: {target_channel} olarak ayarlandı."
     )
 
-# Hedef grup ayarlama fonksiyonu
-async def set_target_group(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+# Mesajları kopyalamak için handler
+async def forward_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
     
-    # Kaynak grup ID'si daha önce girildiyse, devam et
-    if 'source_group' not in user_info.get(user_id, {}):
-        await update.message.reply_text('Lütfen önce kaynak grup ID\'sini girin.')
+    if user_id not in user_info:
+        await update.message.reply_text('Lütfen önce kanal bilgilerini girin.')
         return
 
-    # Hedef grup bilgilerini al
-    target_group_id = update.message.text.strip()  # ID'yi temizle
-
-    # ID doğrulama işlemi
-    if not target_group_id.startswith("-100"):
-        await update.message.reply_text("Geçerli bir grup veya kanal ID'si girin (örneğin: -1001234567890).")
-        return
-
-    user_info[user_id]['target_group'] = target_group_id
-
-    await update.message.reply_text(
-        f"Hedef grup {target_group_id} olarak ayarlandı.\n"
-        "Şimdi Twitter kullanıcı adı veya hashtag girin (örneğin: @username veya #hashtag)."
-    )
-
-# Twitter hedefi ayarlama fonksiyonu
-async def set_twitter_target(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user_id = update.message.from_user.id
-    if 'source_group' not in user_info.get(user_id, {}) or 'target_group' not in user_info.get(user_id, {}):
-        await update.message.reply_text(
-            'Lütfen önce kaynak ve hedef grup ID\'lerini ayarlayın.'
-        )
-        return
-
-    twitter_target = update.message.text.strip()
-    user_info[user_id]['twitter_target'] = twitter_target
-
-    await update.message.reply_text(
-        f"Twitter hedefi {twitter_target} olarak ayarlandı."
-    )
+    source_channel = user_info[user_id]['source_channel']
+    target_channel = user_info[user_id]['target_channel']
+    
+    # Mesajları hedef kanala ilet
+    try:
+        if update.message.chat.id == source_channel:
+            await context.bot.send_message(target_channel, update.message.text)
+    except BadRequest as e:
+        await update.message.reply_text(f"Bir hata oluştu: {e}")
 
 # Twitter güncellemelerini gönderme fonksiyonu
 async def forward_twitter_updates(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
-    if 'source_group' not in user_info.get(user_id, {}) or 'target_group' not in user_info.get(user_id, {}) or 'twitter_target' not in user_info.get(user_id, {}):
-        await update.message.reply_text(
-            'Lütfen önce kaynak, hedef grup ve Twitter hedefi bilgilerini ayarlayın.'
-        )
+    if user_id not in user_info:
+        await update.message.reply_text('Lütfen önce kanal bilgilerini girin.')
         return
 
     twitter_target = user_info[user_id].get('twitter_target')
     if not twitter_target:
-        await update.message.reply_text(
-            'Twitter hedefi belirlenmedi. Lütfen hedefi girin.'
-        )
+        await update.message.reply_text('Twitter hedefi belirlenmedi.')
         return
 
     twitter_updates = get_twitter_updates(twitter_target)
     await update.message.reply_text(
         f"Twitter hedefinden alınan güncellemeler:\n{twitter_updates}"
-                                     )
+    )
