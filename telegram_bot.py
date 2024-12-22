@@ -1,15 +1,15 @@
 import json
-from telegram import Update, ChatMember
+from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import (
     CommandHandler,
     MessageHandler,
+    CallbackQueryHandler,
     filters,
     ContextTypes,
 )
 from telegram.error import BadRequest
-from twitter import get_twitter_updates  # Twitter güncellemelerini almak için
+from twitter import get_twitter_updates
 
-# Kullanıcı bilgilerini saklayacak JSON dosyasını açma
 def load_user_info():
     try:
         with open("user_info.json", "r") as file:
@@ -31,53 +31,53 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         'Örnek: /set_channels @kaynakkanal @hedefkanal'
     )
 
-# Botun olduğu kanalları listeleyen yardımcı fonksiyon
-async def get_bot_channels(update: Update, context: ContextTypes.DEFAULT_TYPE, step: str) -> None:
-    bot = context.bot
-    chat = update.effective_chat
-
-    # Botun üyesi olduğu grupları listele
-    chat_member = await bot.get_chat_member(chat.id, bot.id)
-
-    if chat_member.status not in ["administrator", "creator"]:
-        await update.message.reply_text('Bu komutu kullanabilmek için admin olmalısınız.')
-        return
-    
-    await update.message.reply_text(
-        f'Lütfen {step} kanalını seçin. Mevcut gruplar:\n'
-        f'1. @kanal1\n2. @kanal2\n'
-        'Hangi kanal kaynak kanal olacak?'
-    )
-    # Kanal bilgilerini almak için kaynak kanal seçme adımına geçilir
-    context.user_data['step'] = step
-
-# Kanal ID'si veya kullanıcı adı al
+# Kanal seçimi için düğmeler
 async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    keyboard = [
+        [InlineKeyboardButton("Kaynak Kanal Seç", callback_data='set_source')],
+        [InlineKeyboardButton("Hedef Kanal Seç", callback_data='set_target')],
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text('Lütfen bir işlem seçin:', reply_markup=reply_markup)
+
+# Callback fonksiyonu (Düğmeye tıklanınca çalışır)
+async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await query.answer()
+    
+    user_id = query.from_user.id
+    
+    if query.data == 'set_source':
+        context.user_data['step'] = 'source'
+        await query.edit_message_text('Kaynak kanalı belirtin. Örnek: @kaynakkanal')
+    
+    elif query.data == 'set_target':
+        context.user_data['step'] = 'target'
+        await query.edit_message_text('Hedef kanalı belirtin. Örnek: @hedefkanal')
+
+# Kaynak veya hedef kanalı kaydetme
+async def handle_channel_selection(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
-    
-    # Admin kontrolü
-    member = await update.message.chat.get_member(user_id)  # get_member() fonksiyonunu await ile çağırıyoruz
-    if member.status not in ["administrator", "creator"]:
-        await update.message.reply_text('Bu kanalda admin değilsiniz. Admin olmalısınız.')
+    step = context.user_data.get('step')
+
+    if not step:
+        await update.message.reply_text("Lütfen önce bir seçenek belirleyin.")
         return
 
-    # Kanal ID'lerini al
-    user_input = update.message.text.strip().split()
+    channel = update.message.text.strip()
     
-    if len(user_input) != 3:
-        await update.message.reply_text('Lütfen iki kanal ID\'si veya kullanıcı adı girin. Örnek: /set_channels @kaynakkanal @hedefkanal')
-        return
-
-    source_channel = user_input[1]
-    target_channel = user_input[2]
-
-    # Kanal bilgilerini kaydet
-    user_info[user_id] = {"source_channel": source_channel, "target_channel": target_channel}
+    if step == 'source':
+        user_info[user_id] = user_info.get(user_id, {})
+        user_info[user_id]['source_channel'] = channel
+        await update.message.reply_text(f"Kaynak kanal {channel} olarak ayarlandı.")
+    
+    elif step == 'target':
+        user_info[user_id] = user_info.get(user_id, {})
+        user_info[user_id]['target_channel'] = channel
+        await update.message.reply_text(f"Hedef kanal {channel} olarak ayarlandı.")
+    
     save_user_info(user_info)
-
-    await update.message.reply_text(
-        f"Kaynak kanal: {source_channel}\nHedef kanal: {target_channel} olarak ayarlandı."
-    )
+    context.user_data['step'] = None
 
 # Mesajları kopyalamak için handler
 async def forward_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -90,7 +90,6 @@ async def forward_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     source_channel = user_info[user_id]['source_channel']
     target_channel = user_info[user_id]['target_channel']
     
-    # Mesajları hedef kanala ilet
     try:
         if update.message.chat.username == source_channel:
             await context.bot.send_message(target_channel, update.message.text)
@@ -112,4 +111,4 @@ async def forward_twitter_updates(update: Update, context: ContextTypes.DEFAULT_
     twitter_updates = get_twitter_updates(twitter_target)
     await update.message.reply_text(
         f"Twitter hedefinden alınan güncellemeler:\n{twitter_updates}"
-    )
+        )
