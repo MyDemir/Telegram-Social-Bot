@@ -1,3 +1,4 @@
+# twitter.py
 import requests
 from bs4 import BeautifulSoup
 
@@ -29,3 +30,6 @@ def get_twitter_updates(twitter_target: str) -> str:
 
     except requests.RequestException as e:
         return f"Twitter'dan veri çekme hatası: {e}"
+
+    except Exception as e:
+        return f"Bir hata oluştu: {e}"
