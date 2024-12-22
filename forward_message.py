@@ -1,8 +1,9 @@
 from telegram.ext import CommandHandler, MessageHandler
-from telegram.ext.filters import Text  # Filters yerine Text kullanacağız
+from telegram.ext.filters import Text  # Filters yerine Text kullanıyoruz
 from telegram import Bot
-from dotenv import load_dotenv
+from telegram.ext import Application  # Application importunu ekliyoruz
 import os
+from dotenv import load_dotenv
 from get_x_updates import get_x_updates
 
 # .env dosyasını yükleyelim
