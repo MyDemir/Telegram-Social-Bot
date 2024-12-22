@@ -10,15 +10,28 @@ from telegram_bot import (
 from config import TELEGRAM_BOT_TOKEN
 
 def main():
+    # Telegram bot uygulamasını başlatıyoruz
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
+    # Start komutunun handler'ı
     application.add_handler(CommandHandler("start", start))
+
+    # Kullanıcıdan gelen metin mesajlarını işlemek için handler'lar
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, set_source_group))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, set_target_group))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, set_twitter_target))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, forward_twitter_updates))
-    # Kaynak grup ekleme
+
+    # Kaynak grup ekleme handler'ı
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND,
                           lambda update, context: handle_group_addition(update, context, 'source')))
-    # Hedef grup ekleme
-    application.add_handler
+
+    # Hedef grup ekleme handler'ı
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND,
+                          lambda update, context: handle_group_addition(update, context, 'target')))
+
+    # Polling ile botun sürekli çalışmasını sağlıyoruz
+    application.run_polling()
+
+if __name__ == '__main__':
+    main()
