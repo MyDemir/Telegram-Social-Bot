@@ -1,15 +1,9 @@
 import json
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.ext import (
-    CommandHandler,
-    MessageHandler,
-    CallbackQueryHandler,
-    filters,
-    ContextTypes,
-)
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ContextTypes
 from telegram.error import BadRequest
-from twitter import get_twitter_updates
 
+# Kullanıcı bilgilerini saklayacak JSON dosyasını açma
 def load_user_info():
     try:
         with open("user_info.json", "r") as file:
@@ -25,90 +19,64 @@ user_info = load_user_info()
 
 # Start komutu
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text(
-        'Merhaba! Bot, kaynak kanal ile hedef kanal arasında mesaj kopyalayacak.\n'
-        'İlk olarak, iki kanal ID\'si veya kullanıcı adı girmeniz gerekecek.\n'
-        'Örnek: /set_channels @kaynakkanal @hedefkanal'
-    )
-
-# Kanal seçimi için düğmeler
-async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     keyboard = [
-        [InlineKeyboardButton("Kaynak Kanal Seç", callback_data='set_source')],
-        [InlineKeyboardButton("Hedef Kanal Seç", callback_data='set_target')],
+        [InlineKeyboardButton("Kanal Seç", callback_data='select_channel')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text('Lütfen bir işlem seçin:', reply_markup=reply_markup)
+    
+    await update.message.reply_text(
+        'Merhaba! Kanal ayarlamak için butona tıklayın veya @kanalismi olarak manuel giriş yapın.',
+        reply_markup=reply_markup
+    )
 
-# Callback fonksiyonu (Düğmeye tıklanınca çalışır)
+# Kanal ID'si veya kullanıcı adı al
+async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user_id = update.message.from_user.id
+    user_input = update.message.text.strip().split()
+
+    # Admin kontrolü
+    try:
+        chat_member = await update.message.chat.get_member(user_id)
+        if chat_member.status not in ["administrator", "creator"]:
+            await update.message.reply_text('Bu kanalda admin değilsiniz. Admin olmalısınız.')
+            return
+    except BadRequest as e:
+        await update.message.reply_text('Kanal üyeliğinizi kontrol edemedim.')
+        return
+
+    # Manuel girilen kanal ID'leri işleme
+    if len(user_input) == 3 and user_input[0] == '/set_channels':
+        source_channel = user_input[1]
+        target_channel = user_input[2]
+
+        user_info[user_id] = {
+            "source_channel": source_channel,
+            "target_channel": target_channel
+        }
+        save_user_info(user_info)
+
+        await update.message.reply_text(
+            f"Kaynak kanal: {source_channel}\nHedef kanal: {target_channel} olarak ayarlandı."
+        )
+    else:
+        await update.message.reply_text('Lütfen iki kanal ID\'si girin. Örnek: /set_channels @kanal1 @kanal2')
+
+# Buton tıklamalarını işleme
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
-    await query.answer()
-    
     user_id = query.from_user.id
-    
-    if query.data == 'set_source':
-        context.user_data['step'] = 'source'
-        await query.edit_message_text('Kaynak kanalı belirtin. Örnek: @kaynakkanal')
-    
-    elif query.data == 'set_target':
-        context.user_data['step'] = 'target'
-        await query.edit_message_text('Hedef kanalı belirtin. Örnek: @hedefkanal')
+    await query.answer()
 
-# Kaynak veya hedef kanalı kaydetme
-async def handle_channel_selection(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user_id = update.message.from_user.id
-    step = context.user_data.get('step')
-
-    if not step:
-        await update.message.reply_text("Lütfen önce bir seçenek belirleyin.")
-        return
-
-    channel = update.message.text.strip()
-    
-    if step == 'source':
-        user_info[user_id] = user_info.get(user_id, {})
-        user_info[user_id]['source_channel'] = channel
-        await update.message.reply_text(f"Kaynak kanal {channel} olarak ayarlandı.")
-    
-    elif step == 'target':
-        user_info[user_id] = user_info.get(user_id, {})
-        user_info[user_id]['target_channel'] = channel
-        await update.message.reply_text(f"Hedef kanal {channel} olarak ayarlandı.")
-    
-    save_user_info(user_info)
-    context.user_data['step'] = None
-
-# Mesajları kopyalamak için handler
-async def forward_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user_id = update.message.from_user.id
-    
-    if user_id not in user_info:
-        await update.message.reply_text('Lütfen önce kanal bilgilerini girin.')
-        return
-
-    source_channel = user_info[user_id]['source_channel']
-    target_channel = user_info[user_id]['target_channel']
-    
-    try:
-        if update.message.chat.username == source_channel:
-            await context.bot.send_message(target_channel, update.message.text)
-    except BadRequest as e:
-        await update.message.reply_text(f"Bir hata oluştu: {e}")
-
-# Twitter güncellemelerini gönderme fonksiyonu
-async def forward_twitter_updates(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user_id = update.message.from_user.id
-    if user_id not in user_info:
-        await update.message.reply_text('Lütfen önce kanal bilgilerini girin.')
-        return
-
-    twitter_target = user_info[user_id].get('twitter_target')
-    if not twitter_target:
-        await update.message.reply_text('Twitter hedefi belirlenmedi.')
-        return
-
-    twitter_updates = get_twitter_updates(twitter_target)
-    await update.message.reply_text(
-        f"Twitter hedefinden alınan güncellemeler:\n{twitter_updates}"
-        )
+    # Butona tıklanınca kanalları seçme
+    if query.data == 'select_channel':
+        chat_list = await context.bot.get_chat_administrators(query.message.chat_id)
+        channels = [chat.user.username for chat in chat_list if chat.user.username]
+        
+        if channels:
+            await query.edit_message_text(
+                f"Bulunduğunuz kanallar: {', '.join(channels)}\n"
+                "Lütfen aşağıdaki formatla yanıt verin:\n"
+                "/set_channels @kaynakkanal @hedefkanal"
+            )
+        else:
+            await query.edit_message_text("Hiç kanal bulunamadı.")
