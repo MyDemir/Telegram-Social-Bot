@@ -1,8 +1,8 @@
-import asyncio
 import os
 from dotenv import load_dotenv
 from telegram_bot import start, set_channels, forward_messages, forward_twitter_updates
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
+import asyncio
 
 # .env dosyasını yükleme
 load_dotenv()
@@ -31,4 +31,7 @@ async def main() -> None:
     await application.run_polling()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    # asyncio.run yerine doğrudan asyncio event loop ile çalışıyoruz
+    loop = asyncio.get_event_loop()
+    loop.create_task(main())
+    loop.run_forever()
