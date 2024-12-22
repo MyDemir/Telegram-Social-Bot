@@ -39,4 +39,5 @@ application.add_handler(CommandHandler('get_updates', get_updates))
 application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, forward_message))
 
 # Botu başlat
-application.run_polling()
+if __name__ == "__main__":
+    application.run_polling()
