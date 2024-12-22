@@ -1,4 +1,3 @@
-# main.py
 import asyncio
 import os
 from dotenv import load_dotenv
@@ -21,7 +20,11 @@ async def main() -> None:
     # Handler'lar
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("set_channels", set_channels))
-    application.add_handler(MessageHandler(filters.Text & ~filters.Command, forward_messages))
+    
+    # Text mesajlarını, ancak komutları dışarıda bırakacak şekilde ekliyoruz
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, forward_messages))
+
+    # Twitter güncellemeleri iletme komutunu ekliyoruz
     application.add_handler(CommandHandler("forward_twitter_updates", forward_twitter_updates))
 
     # Botu çalıştır
