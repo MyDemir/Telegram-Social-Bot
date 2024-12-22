@@ -80,3 +80,39 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             )
         else:
             await query.edit_message_text("Hiç kanal bulunamadı.")
+
+# Mesajları kopyalamak için handler
+async def forward_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user_id = update.message.from_user.id
+    
+    if user_id not in user_info:
+        await update.message.reply_text('Lütfen önce kanal bilgilerini girin.')
+        return
+
+    source_channel = user_info[user_id]['source_channel']
+    target_channel = user_info[user_id]['target_channel']
+    
+    # Mesajları hedef kanala ilet
+    try:
+        if update.message.chat.id == source_channel:
+            await context.bot.send_message(target_channel, update.message.text)
+    except BadRequest as e:
+        await update.message.reply_text(f"Bir hata oluştu: {e}")
+
+# X (Twitter) güncellemelerini gönderme fonksiyonu
+async def forward_twitter_updates(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user_id = update.message.from_user.id
+    if user_id not in user_info:
+        await update.message.reply_text('Lütfen önce kanal bilgilerini girin.')
+        return
+
+    twitter_target = user_info[user_id].get('twitter_target')
+    if not twitter_target:
+        await update.message.reply_text('Twitter hedefi belirlenmedi.')
+        return
+
+    # X (Twitter) güncellemelerini al
+    twitter_updates = get_twitter_updates(twitter_target)
+    await update.message.reply_text(
+        f"Twitter hedefinden alınan güncellemeler:\n{twitter_updates}"
+    )
