@@ -1,44 +1,22 @@
-import os
-from dotenv import load_dotenv
-from telegram import Update
-from telegram.ext import Updater, CommandHandler, CallbackContext
-from telegram.error import TelegramError
-from x_updates import get_twitter_updates
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from bot.telegram import start, set_source_group, set_target_group, set_twitter_target, forward_message
+from bot.twitter import get_twitter_updates
+from bot.config import TELEGRAM_BOT_TOKEN
+from bot.utils import load_env
 
 # .env dosyasındaki bilgileri yükle
-load_dotenv()
+load_env()
 
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-
-# '/start' komutu
-def start(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text('Merhaba! Ben Telegram Social Bot V2.\nTwitter güncellemelerini almak için /get_x_updates [kullanıcı_adı] komutunu kullanabilirsiniz.')
-
-# '/get_x_updates' komutu
-def get_updates(update: Update, context: CallbackContext) -> None:
-    if len(context.args) > 0:
-        username = context.args[0]
-        updates = get_twitter_updates(username)
-        
-        # Eğer tweetler varsa, bunları Telegram'a gönderiyoruz
-        if "Hata" not in updates:
-            try:
-                update.message.reply_text(updates)  # Tweet içeriklerini Telegram'a gönder
-            except TelegramError as e:
-                update.message.reply_text(f"Telegram hatası: {e}")
-        else:
-            update.message.reply_text(updates)  # Eğer hata varsa, hata mesajını gönder
-    else:
-        update.message.reply_text('Lütfen bir kullanıcı adı girin.')
-
-# Botu başlatma
 def main():
     updater = Updater(TELEGRAM_BOT_TOKEN)
-
     dispatcher = updater.dispatcher
 
+    # Komutlar
     dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(CommandHandler("get_x_updates", get_updates))
+    dispatcher.add_handler(MessageHandler(Filters.text & Filters.command, set_source_group))  # Kaynak grup için
+    dispatcher.add_handler(MessageHandler(Filters.text & Filters.command, set_target_group))  # Hedef grup için
+    dispatcher.add_handler(MessageHandler(Filters.text & Filters.command, set_twitter_target))  # Twitter hedefi için
+    dispatcher.add_handler(MessageHandler(Filters.text & Filters.chat(chat_id='source_group_id'), forward_message))  # Mesaj aktarma
 
     updater.start_polling()
     updater.idle()
