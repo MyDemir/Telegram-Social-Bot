@@ -5,7 +5,7 @@ from get_x_updates import get_x_updates
 from forward_message import forward_message
 
 # Botu başlatmak için gerekli ayarlar
-updater = Updater(token='YOUR_BOT_API_KEY', use_context=True)
+updater = Updater(token='7520250082:AAGvNgm1KyT6-lmONaHvRKusMKhX3sGp-pM', use_context=True)
 dispatcher = updater.dispatcher
 
 # Botu başlat
