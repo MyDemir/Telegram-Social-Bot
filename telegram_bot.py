@@ -1,15 +1,30 @@
+import json
 from telegram import Update, Chat
 from telegram.ext import (
-    ApplicationBuilder,
     CommandHandler,
     MessageHandler,
-    filters,  # filters artık küçük harfle import ediliyor
+    filters,
     ContextTypes,
 )
 from twitter import get_twitter_updates
 from config import TELEGRAM_BOT_TOKEN
 
-user_info = {}
+USER_DATA_FILE = 'user_data.json'
+
+# Kullanıcı verilerini JSON dosyasına kaydetme
+def save_user_data(user_info):
+    with open(USER_DATA_FILE, 'w') as f:
+        json.dump(user_info, f, indent=4)
+
+# Kullanıcı verilerini JSON dosyasından okuma
+def load_user_data():
+    try:
+        with open(USER_DATA_FILE, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+
+user_info = load_user_data()
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
@@ -20,7 +35,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def set_source_group(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
     source_group_id = update.message.text
+
     user_info[user_id] = {'source_group': source_group_id}
+    save_user_data(user_info)
     
     await update.message.reply_text(
         f"Kaynak grup {source_group_id} olarak ayarlandı.\nŞimdi hedef grup ID'sini girin."
@@ -34,6 +51,7 @@ async def set_target_group(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
     target_group_id = update.message.text
     user_info[user_id]['target_group'] = target_group_id
+    save_user_data(user_info)
 
     await update.message.reply_text(
         f"Hedef grup {target_group_id} olarak ayarlandı.\n"
@@ -50,6 +68,7 @@ async def set_twitter_target(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     twitter_target = update.message.text
     user_info[user_id]['twitter_target'] = twitter_target
+    save_user_data(user_info)
 
     await update.message.reply_text(
         f"Twitter hedefi {twitter_target} olarak ayarlandı."
