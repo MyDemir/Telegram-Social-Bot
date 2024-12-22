@@ -1,30 +1,34 @@
-from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-from x_updates import send_updates
-from telegram_forward import forward_message
-from config import TELEGRAM_BOT_TOKEN
+from telegram import Update
+import logging
+from get_x_updates import get_x_updates
+from forward_message import forward_message
 
-# Botu başlatma
+# Botu başlatmak için gerekli ayarlar
+updater = Updater(token='YOUR_BOT_API_KEY', use_context=True)
+dispatcher = updater.dispatcher
+
+# Botu başlat
+updater.start_polling()
+
+# '/start' komutu
 def start(update, context):
-    update.message.reply_text("Bot çalışıyor! İçerik kanalını ve hedef kanalınızı seçin.")
+    update.message.reply_text("Bot çalışıyor! X (Twitter) kullanıcı adı girerek güncellemeleri alabilirsiniz.")
 
-def main():
-    # Botu başlatıyoruz
-    updater = Updater(token=TELEGRAM_BOT_TOKEN, use_context=True)
-    dispatcher = updater.dispatcher
+# '/get_updates' komutu, X (Twitter) güncellemelerini almak için
+def get_updates(update, context):
+    if len(context.args) == 0:
+        update.message.reply_text("Lütfen bir X (Twitter) kullanıcı adı girin.")
+        return
 
-    # Başlangıç komutu
-    dispatcher.add_handler(CommandHandler('start', start))
+    username = context.args[0]
+    updates = get_x_updates(username)
+    update.message.reply_text(updates)
 
-    # X platformundan güncellemeleri alma
-    dispatcher.add_handler(CommandHandler('get_x_updates', send_updates))
+# Mesajı iletmek için mesaj işleyici
+dispatcher.add_handler(CommandHandler('start', start))
+dispatcher.add_handler(CommandHandler('get_updates', get_updates))
+dispatcher.add_handler(MessageHandler(Filters.text, forward_message))
 
-    # Mesaj kopyalama
-    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, forward_message))
-
-    # Polling başlatma
-    updater.start_polling()
-    updater.idle()
-
-if __name__ == '__main__':
-    main()
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
