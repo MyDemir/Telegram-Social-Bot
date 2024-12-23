@@ -68,11 +68,10 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     # Kaynak kanalın kullanıcı adını almak ve URL oluşturmak
     channel_username = source_channel.lstrip('@')  # '@' işaretini kaldırıyoruz.
-
-    # Eğer kullanıcı adı yoksa, kanal ID'siyle URL oluşturulamaz. Bu durumda bir hata olabilir veya alternatif yöntem kullanılabilir.
+    
+    # Kanal kullanıcı adı varsa, URL'yi oluştururuz. Yoksa kanal ID'sini kullanırız
     if not channel_username:
-        # Burada kanal ID'siyle işlem yapıyoruz (ama kullanıcıya göstermek için kullanıcı adı gerektiği için dikkatli olunmalı).
-        channel_username = str(source_channel)  # Kanal ID'si de kullanılabilir, fakat bu genellikle yaygın değildir.
+        channel_username = str(source_channel)  # Kanal ID'si olarak kullanıyoruz.
 
     # Butonun linki
     button_url = f"https://t.me/{channel_username}"
