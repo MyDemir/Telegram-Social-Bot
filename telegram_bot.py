@@ -8,7 +8,7 @@ from twitter import get_twitter_updates  # twitter.py fonksiyonunu ekledim
 # Logger kurulumu
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    level=logging.DEBUG  # DEBUG seviyesinde log tutacağız
 )
 logger = logging.getLogger(__name__)
 
@@ -154,4 +154,5 @@ async def get_twitter_update(update: Update, context: ContextTypes.DEFAULT_TYPE)
     if tweet_text:
         await update.message.reply_text(f"Son Tweet: {tweet_text}\n{tweet_url}")
     else:
-        await update.message.reply_text("Son tweet alınamadı.")
+        # Eğer tweet alınamazsa hata mesajı
+        await update.message.reply_text("Son tweet alınamadı. Lütfen daha sonra tekrar deneyin.")
