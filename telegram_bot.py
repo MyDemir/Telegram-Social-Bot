@@ -4,8 +4,15 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.error import BadRequest
 
-# Logger ayarlaması
-logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
+# Logger ayarlaması (hem konsola hem de dosyaya log kaydedecek şekilde yapılandırdık)
+logging.basicConfig(
+    format='%(asctime)s - %(message)s',
+    level=logging.INFO,
+    handlers=[
+        logging.StreamHandler(),  # Konsola log yazma
+        logging.FileHandler("bot_log.txt")  # Dosyaya log yazma
+    ]
+)
 
 # Kullanıcı bilgilerini saklayacak JSON dosyasını açma
 def load_user_info():
