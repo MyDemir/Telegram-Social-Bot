@@ -1,7 +1,11 @@
 import json
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto, InputMediaVideo, InputMediaAnimation, InputMediaDocument
+import logging
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.error import BadRequest
+
+# Logger ayarları
+logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
 
 # Kullanıcı bilgilerini saklayacak JSON dosyasını açma
 def load_user_info():
@@ -64,60 +68,46 @@ async def forward_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     
     # Mesajın kaynak kanalından gelip gelmediğini kontrol et
     if update.message.chat.id != int(source_channel):  # source_channel ID'si doğrulanır
+        logging.info(f"Mesaj kaynaktan gelmedi. Kaynak Kanal: {source_channel}, Gelen Kanal: {update.message.chat.id}")
         return  # Eğer kaynaktan gelmiyorsa, işlem yapılmaz
 
-    media_group = []
+    # Mesaj tipi kontrolü
     if update.message.text:
-        media_group.append(update.message.text)
-
-    # Fotoğraf gönderme
-    if update.message.photo:
-        for photo in update.message.photo:
-            media_group.append(InputMediaPhoto(photo.file_id))
-    
-    # Video gönderme
-    if update.message.video:
-        media_group.append(InputMediaVideo(update.message.video.file_id))
-
-    # GIF gönderme
-    if update.message.animation:
-        media_group.append(InputMediaAnimation(update.message.animation.file_id))
-
-    # Dosya gönderme
-    if update.message.document:
-        media_group.append(InputMediaDocument(update.message.document.file_id))
-
-    if media_group:
+        # Metin mesajı gönder
         try:
-            if len(media_group) == 1:
-                # Sadece metin veya tek medya öğesi varsa
-                await context.bot.send_message(target_channel, media_group[0])
-            else:
-                # Birden fazla medya öğesi varsa, media_group kullanarak gönder
-                await context.bot.send_media_group(target_channel, media_group)
+            await context.bot.send_message(target_channel, update.message.text)
+            logging.info(f"Metin mesajı gönderildi. Hedef Kanal: {target_channel}")
         except BadRequest as e:
-            await update.message.reply_text(f"Bir hata oluştu: {e}")
+            logging.error(f"Metin mesajı gönderilirken hata oluştu: {e}")
 
-# X (Twitter) güncellemelerini gönderme fonksiyonu
-async def forward_twitter_updates(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user_id = update.message.from_user.id
-    if user_id not in user_info:
-        await update.message.reply_text('Lütfen önce kanal bilgilerini girin.')
-        return
+    # Fotoğraf kontrolü
+    elif update.message.photo:
+        # Fotoğraf gönder
+        try:
+            photo = update.message.photo[-1]  # Fotoğrafın en yüksek çözünürlüğünü alıyoruz
+            await context.bot.send_photo(target_channel, photo.file_id)
+            logging.info(f"Fotoğraf gönderildi. Hedef Kanal: {target_channel}")
+        except BadRequest as e:
+            logging.error(f"Fotoğraf gönderilirken hata oluştu: {e}")
 
-    twitter_target = user_info[user_id].get('twitter_target')
-    if not twitter_target:
-        await update.message.reply_text('Twitter hedefi belirlenmedi.')
-        return
+    # Video kontrolü
+    elif update.message.video:
+        # Video gönder
+        try:
+            await context.bot.send_video(target_channel, update.message.video.file_id)
+            logging.info(f"Video gönderildi. Hedef Kanal: {target_channel}")
+        except BadRequest as e:
+            logging.error(f"Video gönderilirken hata oluştu: {e}")
 
-    # X (Twitter) güncellemelerini al
-    twitter_updates = get_twitter_updates(twitter_target)
-    await update.message.reply_text(
-        f"Twitter hedefinden alınan güncellemeler:\n{twitter_updates}"
-    )
+    # Belge kontrolü
+    elif update.message.document:
+        # Belge gönder
+        try:
+            await context.bot.send_document(target_channel, update.message.document.file_id)
+            logging.info(f"Belge gönderildi. Hedef Kanal: {target_channel}")
+        except BadRequest as e:
+            logging.error(f"Belge gönderilirken hata oluştu: {e}")
 
-# Twitter güncellemelerini almak için placeholder fonksiyonu
-def get_twitter_updates(target):
-    # Gerçek X (Twitter) güncellemeleri almak için burada API kullanabilirsiniz.
-    # Şu an için örnek bir mesaj döndürüyor.
-    return f"Burada {target} için güncellemeler olacak."
+    # Diğer medya türleri (ses, sticker, vs.) eklemek için benzer kontroller yapılabilir.
+    else:
+        logging.info("Desteklenmeyen medya türü alındı.")
