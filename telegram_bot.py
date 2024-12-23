@@ -1,8 +1,9 @@
 import json
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.error import BadRequest
 
+# Kullanıcı bilgilerini saklayacak JSON dosyasını açma
 def load_user_info():
     try:
         with open("user_info.json", "r") as file:
@@ -19,9 +20,8 @@ user_info = load_user_info()
 # Start komutu
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
-        "Merhaba! Kaynak kanal içerikleri hedef kanala bildirim olarak gönderilecek.\n\n"
-        "Lütfen aşağıdaki formatı kullanarak kanalları ayarlayın:\n"
-        "Örnek: /set_channels @kaynakkanal @hedefkanal"
+        "Merhaba! Bu bot, bir kanalda paylaşılan gönderileri diğer kanala bildirmek için tasarlandı.\n\n"
+        "Kullanım: /set_channels @kaynakkanal @hedefkanal"
     )
 
 # Kanal ayarlama komutu
@@ -34,29 +34,22 @@ async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         target_channel_input = user_input[2]
 
         source_channel_id = await get_channel_id(context, source_channel_input)
-        if source_channel_id is None:
-            await update.message.reply_text("Kaynak kanal bulunamadı.")
-            return
-
         target_channel_id = await get_channel_id(context, target_channel_input)
-        if target_channel_id is None:
-            await update.message.reply_text("Hedef kanal bulunamadı.")
-            return
 
-        # Kanal bilgilerini kaydet
-        user_info[user_id] = {
-            "source_channel": source_channel_id,
-            "target_channel": target_channel_id
-        }
-        save_user_info(user_info)
-
-        await update.message.reply_text(
-            f"Kanallar ayarlandı!\n"
-            f"Kaynak kanal: {source_channel_input} ({source_channel_id})\n"
-            f"Hedef kanal: {target_channel_input} ({target_channel_id})"
-        )
+        if source_channel_id and target_channel_id:
+            user_info[user_id] = {
+                "source_channel": source_channel_id,
+                "target_channel": target_channel_id
+            }
+            save_user_info(user_info)
+            await update.message.reply_text(
+                f"Kanallar ayarlandı!\nKaynak: {source_channel_input} ({source_channel_id})\n"
+                f"Hedef: {target_channel_input} ({target_channel_id})"
+            )
+        else:
+            await update.message.reply_text("Kanal bilgileri doğrulanamadı. Lütfen kullanıcı adını kontrol edin.")
     else:
-        await update.message.reply_text("Hatalı format. Örnek: /set_channels @kaynakkanal @hedefkanal")
+        await update.message.reply_text("Lütfen iki kanal adı girin. Örnek: /set_channels @kaynakkanal @hedefkanal")
 
 # Kanal ID'si alma
 async def get_channel_id(context, username):
@@ -66,16 +59,19 @@ async def get_channel_id(context, username):
     except Exception:
         return None
 
-# Kanal adminlerini kontrol etme
+# Admin kontrolü
 async def is_user_admin(context, chat_id, user_id):
     try:
-        member = await context.bot.get_chat_member(chat_id, user_id)
-        return member.status in ['administrator', 'creator']
+        chat_member = await context.bot.get_chat_member(chat_id, user_id)
+        return chat_member.status in ['administrator', 'creator']
     except Exception:
         return False
 
-# Bilgilendirme mesajı gönderme (Admin kontrolü eklendi)
+# Mesajları yönlendirmek yerine bilgilendirme mesajı gönder
 async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not update.message:
+        return  # Mesaj yoksa çık
+
     user_id = update.message.from_user.id
     chat_id = update.message.chat.id
 
@@ -90,14 +86,11 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if source_channel is None or target_channel is None:
         return
     
-    # KULLANICI ADMIN Mİ KONTROL ET
     is_admin = await is_user_admin(context, source_channel, user_id)
     
     if not is_admin:
-        # Admin değilse işlem yapma
         return
     
-    # Butonlu bilgilendirme mesajı gönder
     source_channel_link = f"https://t.me/{update.message.chat.username}" if update.message.chat.username else "Kanalı Görüntüle"
     keyboard = InlineKeyboardMarkup(
         [[InlineKeyboardButton("Kanala Git", url=source_channel_link)]]
