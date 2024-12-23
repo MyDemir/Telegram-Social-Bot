@@ -1,5 +1,5 @@
 import json
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.error import BadRequest
 
@@ -61,62 +61,33 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     source_channel = user_info[user_id]['source_channel']
     target_channel = user_info[user_id]['target_channel']
+    
+    # Mesajın kaynak kanalından gelip gelmediğini kontrol et
+    if update.message.chat.id != int(source_channel):  # source_channel ID'si doğrulanır
+        return  # Eğer kaynaktan gelmiyorsa, işlem yapılmaz
 
-    # Mesajın türünü kontrol et ve uygun fonksiyonu çağır
-    if update.message.text:  # Eğer metin mesajı varsa
-        await send_message_to_channel(context, target_channel, update.message.text)
-    elif update.message.photo:  # Eğer fotoğraf varsa
-        photo = update.message.photo[-1].file_id  # En yüksek çözünürlüklü fotoğrafı al
-        await send_photo_to_channel(context, target_channel, photo)
-    elif update.message.video:  # Eğer video varsa
-        video = update.message.video.file_id
-        await send_video_to_channel(context, target_channel, video)
-    elif update.message.document:  # Eğer dosya varsa
-        file = update.message.document.file_id
-        await send_document_to_channel(context, target_channel, file)
-    else:
-        print("Unsupported message type.")
-
-# Herhangi bir mesajı hedef kanala ilet
-async def send_message_to_channel(context, target_channel, message):
-    try:
-        await context.bot.send_message(
-            chat_id=target_channel,
-            text=message
-        )
-        print("Message sent successfully")
-    except BadRequest as e:
-        print(f"Error sending message: {e}")
-
-# Fotoğrafı hedef kanala ilet
-async def send_photo_to_channel(context, target_channel, photo):
-    try:
-        await context.bot.send_photo(
-            chat_id=target_channel,
-            photo=photo
-        )
-        print("Photo sent successfully")
-    except BadRequest as e:
-        print(f"Error sending photo: {e}")
-
-# Video'yu hedef kanala ilet
-async def send_video_to_channel(context, target_channel, video):
-    try:
-        await context.bot.send_video(
-            chat_id=target_channel,
-            video=video
-        )
-        print("Video sent successfully")
-    except BadRequest as e:
-        print(f"Error sending video: {e}")
-
-# Dosyayı hedef kanala ilet
-async def send_document_to_channel(context, target_channel, file):
-    try:
-        await context.bot.send_document(
-            chat_id=target_channel,
-            document=file
-        )
-        print("Document sent successfully")
-    except BadRequest as e:
-        print(f"Error sending document: {e}")
+    # Metin mesajını hedef kanala ilet
+    if update.message.text:
+        try:
+            await context.bot.send_message(target_channel, update.message.text)
+        except BadRequest as e:
+            await update.message.reply_text(f"Bir hata oluştu: {e}")
+    
+    # Fotoğraf, video, dosya gibi medya mesajlarını ilet
+    if update.message.photo:
+        try:
+            await context.bot.send_photo(target_channel, update.message.photo[-1].file_id, caption=update.message.caption)
+        except BadRequest as e:
+            await update.message.reply_text(f"Bir hata oluştu: {e}")
+    
+    if update.message.video:
+        try:
+            await context.bot.send_video(target_channel, update.message.video.file_id, caption=update.message.caption)
+        except BadRequest as e:
+            await update.message.reply_text(f"Bir hata oluştu: {e}")
+    
+    if update.message.document:
+        try:
+            await context.bot.send_document(target_channel, update.message.document.file_id)
+        except BadRequest as e:
+            await update.message.reply_text(f"Bir hata oluştu: {e}")
