@@ -66,13 +66,10 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if update.message.chat.id != int(source_channel):  # source_channel ID'si doğrulanır
         return  # Eğer kaynaktan gelmiyorsa, işlem yapılmaz
 
-    # Bilgilendirme mesajı
+    # Bilgilendirme mesajı (daha kısa ve buton eklenmiş)
     informative_message = (
-        f"🔔 *Önemli Güncelleme!* 🔔\n\n"
-        f"Hey, {target_channel} kanalımızda yeni bir güncelleme paylaşıldı! 📢\n\n"
-        f"👉 *{source_channel} kanalına göz atmak için tıklayın!* 👈\n\n"
-        f"💥 *Yeni içeriği kaçırmayın!*\n\n"
-        f"💬 *Mesajın içeriği şu şekilde:*"
+        f"🔔 *{source_channel} kanalında yeni içerik var!* 🔔\n\n"
+        f"👉 *Göz atmak için aşağıdaki butona tıklayın!* 👈"
     )
 
     # MarkdownV2 karakterlerini kaçırma
@@ -84,9 +81,14 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     informative_message_escaped = escape_markdown(informative_message)
 
+    # Bilgilendirme mesajını hedef kanala gönder
     try:
-        # Bilgilendirme mesajını hedef kanala gönder
-        await context.bot.send_message(target_channel, informative_message_escaped, parse_mode="MarkdownV2")
+        # Bilgilendirme mesajını göndermek ve buton eklemek
+        keyboard = [
+            [InlineKeyboardButton("Kanalı Görüntüle", url=f"https://t.me/{source_channel}")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await context.bot.send_message(target_channel, informative_message_escaped, parse_mode="MarkdownV2", reply_markup=reply_markup)
         print(f"[Bilgi] Bilgilendirme mesajı {target_channel} kanalına başarıyla gönderildi.")
     except BadRequest as e:
         await update.message.reply_text(f"Bir hata oluştu: {e}")
