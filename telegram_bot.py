@@ -54,11 +54,11 @@ async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         await update.message.reply_text("Lütfen iki kanal adı girin. Örnek: /set_channels @kaynakkanal @hedefkanal")
 
 # Twitter kullanıcı adı ayarlama
-async def set_twitter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def set_twitter_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
     user_input = update.message.text.strip().split()
 
-    if len(user_input) == 2:  # Kullanıcı adı düzgün girildiyse
+    if len(user_input) > 1:  # Kullanıcı adı düzgün girildiyse
         twitter_username = user_input[1].lstrip('@')  # '@' işaretini kaldırıyoruz
         user_info[user_id] = {
             "twitter_username": twitter_username
@@ -72,6 +72,7 @@ async def set_twitter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         await update.message.reply_text(
             "Lütfen bir Twitter kullanıcı adı girin. Örnek: /set_twitter @DeAli33"
         )
+
 # Kanal ID'si alma
 async def get_channel_id(context, username):
     try:
