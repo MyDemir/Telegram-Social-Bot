@@ -18,7 +18,7 @@ def main() -> None:
     # Komutlar
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("set_channels", set_channels))
-    application.add_handler(CommandHandler("set_twitter", set_twitter_user))  # Twitter kullanıcı adını ayarlama
+    application.add_handler(CommandHandler("set_twitter", set_twitter))  # Twitter kullanıcı adını ayarlama
 
     # Kanal mesajlarını dinleme
     application.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, forward_content))  # Kanal mesajlarını ilet
