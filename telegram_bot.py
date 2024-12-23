@@ -2,7 +2,7 @@ import json
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.error import BadRequest
-from twitter import get_twitter_updates  # Twitter güncellemelerini almak için twitter.py'dan fonksiyonu import ediyoruz.
+from twitter import get_twitter_updates  # twitter.py'den fonksiyonu import ediyoruz.
 
 # Kullanıcı bilgilerini saklayacak JSON dosyasını açma
 def load_user_info():
@@ -39,6 +39,7 @@ async def send_twitter_updates(update: Update, context: ContextTypes.DEFAULT_TYP
         await update.message.reply_text("Twitter kullanıcı adı ayarlanmamış.")
         return
     
+    # twitter.py dosyasındaki fonksiyonla Twitter'dan güncellemeleri alıyoruz
     twitter_updates = get_twitter_updates(twitter_user)  # Twitter'dan güncellemeleri al
     if twitter_updates:
         await update.message.reply_text(f"Twitter güncellemeleri:\n\n{twitter_updates}")
