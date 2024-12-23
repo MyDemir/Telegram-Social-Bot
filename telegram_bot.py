@@ -68,7 +68,7 @@ async def is_user_admin(context, chat_id, user_id):
     except Exception:
         return False
 
-# Mesajları yönlendirmek yerine bilgilendirme mesajı gönder
+# Kaynak kanalındaki mesajları hedef kanala ileten fonksiyon
 async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not update.message:
         return  # Mesaj yoksa çık
@@ -86,30 +86,30 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     if source_channel is None or target_channel is None:
         return
-    
+
     is_admin = await is_user_admin(context, source_channel, user_id)
-    
+
     if not is_admin:
         return
-    
-    source_channel_link = f"https://t.me/{update.message.chat.username}" if update.message.chat.username else "Kanalı Görüntüle"
-    keyboard = InlineKeyboardMarkup(
-        [[InlineKeyboardButton("Kanala Git", url=source_channel_link)]]
-    )
-    
+
     try:
+        # Kaynak kanalda bir mesaj geldiğinde sadece bildirim gönderiyoruz
+        source_channel_link = f"https://t.me/{update.message.chat.username}" if update.message.chat.username else "Kaynak Kanalı"
+        keyboard = InlineKeyboardMarkup(
+            [[InlineKeyboardButton("Kaynak Kanala Git", url=source_channel_link)]]
+        )
+
         await context.bot.send_message(
             chat_id=target_channel,
-            text="🔔 Yeni içerik var! Kaynak kanala göz atın! 🔔",
+            text="🔔 Yeni bir gönderi paylaşıldı! Kontrol etmek için Kaynak Kanalı'na git.",
             reply_markup=keyboard
         )
     except BadRequest as e:
         await update.message.reply_text(f"Bir hata oluştu: {e}")
-        
-# Twitter güncellemelerini bildiren yeni fonksiyon
+
+# Twitter güncellemelerini bildiren fonksiyon
 async def notify_twitter_update(update, context) -> None:
-    # Burada Twitter kullanıcısını belirleyelim
-    twitter_target = "DeAli33"  # Bu kısmı dinamik hale getirebilirsiniz
+    twitter_target = "DeAli33"  # Burada Twitter kullanıcısını belirleyelim
     tweet_text, tweet_url = get_twitter_updates(twitter_target)
 
     if tweet_text and tweet_url:
@@ -133,12 +133,11 @@ async def notify_twitter_update(update, context) -> None:
         if not is_admin:
             return
 
-        # Tweet'e git butonunu ekleyelim
+        # Twitter güncellemesini bildirelim
         keyboard = InlineKeyboardMarkup(
             [[InlineKeyboardButton("Tweet'e Git", url=tweet_url)]]
         )
 
-        # Twitter güncellemesini hedef kanala gönder
         try:
             await context.bot.send_message(
                 chat_id=target_channel,
