@@ -1,5 +1,5 @@
 import json
-from telegram import Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 from telegram.error import BadRequest
 
@@ -97,11 +97,17 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     # Kaynak kanalın linkini al
     source_channel_link = f"t.me/{update.message.chat.username}" if update.message.chat.username else f"Kanala Erişim Yok"
 
-    # Bilgilendirme mesajını hedef kanala gönder
+    # Bilgilendirme mesajı ve butonu hedef kanala gönder
+    keyboard = [
+        [InlineKeyboardButton("Kanala Git", url=source_channel_link)]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
     try:
         await context.bot.send_message(
             target_channel, 
-            f"🔔 {source_channel_link} kanalında yeni içerik var! 🔔"
+            f"🔔 Yeni içerik var! Analiz kanalına hemen göz at! 🔔",
+            reply_markup=reply_markup
         )
     except BadRequest as e:
         await update.message.reply_text(f"Bir hata oluştu: {e}")
