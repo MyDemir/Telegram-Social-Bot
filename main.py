@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from telegram_bot import start, set_channels, forward_content
+from telegram_bot import start, set_channels, forward_content, notify_twitter_update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
 
 # .env dosyasını yükleme
@@ -18,6 +18,7 @@ def main() -> None:
     # Komutlar
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("set_channels", set_channels))
+    application.add_handler(CommandHandler("twitter_update", notify_twitter_update))  # Twitter güncellemesi komutu
 
     # Kanal mesajlarını dinleme
     application.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, forward_content))
