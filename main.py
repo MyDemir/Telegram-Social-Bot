@@ -21,7 +21,7 @@ def main() -> None:
     application.add_handler(CommandHandler("twitter_update", notify_twitter_update))  # Twitter güncellemesi komutu
 
     # Kanal mesajlarını dinleme
-    application.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, forward_content))
+    application.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, forward_content))  # Kanal mesajlarını ilet
 
     application.run_polling()
 
