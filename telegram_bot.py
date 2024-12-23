@@ -2,7 +2,6 @@ import json
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.error import BadRequest
-from twitter import get_twitter_updates  # X (Twitter) güncellemelerini almak için eklenen import
 
 # Kullanıcı bilgilerini saklayacak JSON dosyasını açma
 def load_user_info():
@@ -22,8 +21,7 @@ user_info = load_user_info()
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
         "Merhaba! Bu bot, bir kanalda paylaşılan gönderileri diğer kanala bildirmek için tasarlandı.\n\n"
-        "Kullanım: /set_channels @kaynakkanal @hedefkanal\n"
-        "X (Twitter) güncellemelerini almak için: /get_twitter_updates @kullaniciadi"
+        "Kullanım: /set_channels @kaynakkanal @hedefkanal"
     )
 
 # Kanal ayarlama komutu
@@ -68,26 +66,6 @@ async def is_user_admin(context, chat_id, user_id):
         return chat_member.status in ['administrator', 'creator']
     except Exception:
         return False
-
-# X (Twitter) güncellemelerini alıp hedef kanala gönderen fonksiyon
-async def get_and_send_twitter_updates(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user_input = update.message.text.strip().split()
-    
-    if len(user_input) != 2:
-        await update.message.reply_text("Lütfen geçerli bir X (Twitter) kullanıcı adı girin. Örnek: /get_twitter_updates @kullaniciadi")
-        return
-    
-    twitter_username = user_input[1].lstrip('@')  # @ işaretini kaldırıyoruz
-    tweet_updates = get_twitter_updates(twitter_username)  # Twitter güncellemelerini alıyoruz
-    
-    if tweet_updates:
-        # Eğer güncellemeler varsa, bunları gönderiyoruz
-        await context.bot.send_message(
-            chat_id=update.message.chat.id,
-            text=f"X (Twitter) Güncellemeleri ({twitter_username}):\n\n{tweet_updates}"
-        )
-    else:
-        await update.message.reply_text("Yeni tweet'ler bulunamadı ya da bir hata oluştu.")
 
 # Mesajları yönlendirmek yerine bilgilendirme mesajı gönder
 async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
