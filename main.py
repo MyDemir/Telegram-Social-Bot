@@ -12,6 +12,7 @@ def main():
 
     application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
+    application.add_handler(CommandHandler("test_twitter", test_twitter))
     # Komutları ekle
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("set_channels", set_channels))
