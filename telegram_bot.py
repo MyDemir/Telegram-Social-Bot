@@ -83,9 +83,9 @@ async def get_channel_id(context, username):
 async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
     
+    # Kullanıcıdan kanal bilgileri alındı mı kontrol et
     if user_id not in user_info:
-        await update.message.reply_text('Lütfen önce kanal bilgilerini girin.')
-        return
+        return  # Kanal bilgisi yoksa işlem yapılmaz
 
     source_channel = user_info[user_id]['source_channel']
     target_channel = user_info[user_id]['target_channel']
