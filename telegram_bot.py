@@ -17,20 +17,12 @@ def save_user_info(user_info):
 
 user_info = load_user_info()
 
-# Admin cache (önbellek)
-admin_cache = {}
-
 # Kaynak kanalındaki adminleri almak için fonksiyon
-async def get_channel_admins(context: ContextTypes.DEFAULT_TYPE, chat_id) -> list:
-    if chat_id in admin_cache:
-        return admin_cache[chat_id]  # Cache'den admin listesini döndür
-    
+async def get_channel_admins(chat_id, context: ContextTypes.DEFAULT_TYPE) -> list:
     try:
         admins = await context.bot.get_chat_administrators(chat_id)
-        admin_ids = [admin.user.id for admin in admins]
-        admin_cache[chat_id] = admin_ids  # Admin listesini önbelleğe al
-        return admin_ids
-    except Exception as e:
+        return [admin.user.id for admin in admins]
+    except BadRequest as e:
         print(f"Admin listesi alınırken hata oluştu: {e}")
         return []
 
@@ -38,9 +30,8 @@ async def get_channel_admins(context: ContextTypes.DEFAULT_TYPE, chat_id) -> lis
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
     chat_id = update.message.chat.id
-    
-    # Admin kontrolü yapılıyor
-    admin_ids = await get_channel_admins(context, chat_id)
+
+    admin_ids = await get_channel_admins(chat_id, context)
     if user_id not in admin_ids:
         await update.message.reply_text("Bu komutu kullanmaya yetkiniz yok.")
         return
@@ -55,22 +46,19 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_markup=reply_markup
     )
 
-# Kanal ID'si veya kullanıcı adı al
+# /set_channels komutu
 async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
     user_input = update.message.text.strip().split()
-    chat_id = update.message.chat.id
 
-    # Admin kontrolü
-    admin_ids = await get_channel_admins(context, chat_id)
-    if user_id not in admin_ids:
-        await update.message.reply_text("Bu komutu kullanmaya yetkiniz yok.")
-        return
-
-    # Kanal bilgisi ayarlama
     if len(user_input) == 3 and user_input[0] == '/set_channels':
         source_channel = user_input[1]
         target_channel = user_input[2]
+
+        admin_ids = await get_channel_admins(source_channel, context)
+        if user_id not in admin_ids:
+            await update.message.reply_text("Bu komutu kullanmaya yetkiniz yok.")
+            return
 
         user_info[user_id] = {
             "source_channel": source_channel,
@@ -84,38 +72,60 @@ async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     else:
         await update.message.reply_text('Lütfen iki kanal ID\'si girin. Örnek: /set_channels @kanal1 @kanal2')
 
-# Mesajları kopyalamak için handler
+# /connect komutu (özel mesajdan kanal bağlama)
+async def connect_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user_id = update.message.from_user.id
+    args = context.args
+
+    if len(args) != 2:
+        await update.message.reply_text("Yanlış format! Örnek: /connect @kanal1 @kanal2")
+        return
+
+    source_channel = args[0]
+    target_channel = args[1]
+
+    try:
+        source_admins = await get_channel_admins(source_channel, context)
+        target_admins = await get_channel_admins(target_channel, context)
+
+        admin_ids = source_admins + target_admins
+
+        if user_id not in admin_ids:
+            await update.message.reply_text("Bu kanalları ayarlamak için yetkiniz yok.")
+            return
+
+        user_info[user_id] = {
+            "source_channel": source_channel,
+            "target_channel": target_channel
+        }
+        save_user_info(user_info)
+
+        await update.message.reply_text(
+            f"Bağlantı kuruldu:\nKaynak: {source_channel}\nHedef: {target_channel}"
+        )
+    except BadRequest as e:
+        await update.message.reply_text(f"Bir hata oluştu: {e}")
+
+# Mesajları ileten handler
 async def forward_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
     chat_id = update.message.chat.id
-    
-    # Kaynak kanalın adminlerini al
-    admin_ids = await get_channel_admins(context, chat_id)
-    
-    # Eğer kullanıcı admin değilse, mesajı iletme
+
+    admin_ids = await get_channel_admins(chat_id, context)
     if user_id not in admin_ids:
         return
 
-    # Admin olduğunda mesajı hedef kanala ilet
+    # Mesajı hedef kanala yönlendir
     if user_id in user_info:
         source_channel = user_info[user_id]['source_channel']
         target_channel = user_info[user_id]['target_channel']
-        
-        # Kaynak kanal doğrulaması (ID'leri integer yaparak karşılaştır)
-        if chat_id != int(source_channel):
-            return  # Kaynak kanal dışından gelen mesajlar işlenmez
 
-        try:
-            # Mesajı hedef kanala gönder
-            if update.message.text:
-                await context.bot.send_message(target_channel, update.message.text)
-            elif update.message.photo:
-                await context.bot.send_photo(
+        if chat_id == int(source_channel):
+            try:
+                await context.bot.forward_message(
                     chat_id=target_channel,
-                    photo=update.message.photo[-1].file_id,
-                    caption=update.message.caption if update.message.caption else ""
+                    from_chat_id=chat_id,
+                    message_id=update.message.message_id
                 )
-        except BadRequest as e:
-            await update.message.reply_text(f"Bir hata oluştu: {e}")
-    else:
-        await update.message.reply_text("Kanal ayarları yapılmamış. Lütfen /set_channels komutunu kullanın.")
+            except BadRequest as e:
+                print(f"Mesaj iletilirken hata: {e}")
