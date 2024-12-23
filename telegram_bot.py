@@ -2,6 +2,7 @@ import json
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.error import BadRequest
+from twitter import get_twitter_updates  # Twitter fonksiyonunu içeri aktarıyoruz
 
 # Kullanıcı bilgilerini saklayacak JSON dosyasını açma
 def load_user_info():
@@ -104,3 +105,45 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         )
     except BadRequest as e:
         await update.message.reply_text(f"Bir hata oluştu: {e}")
+        
+# Twitter güncellemelerini bildiren yeni fonksiyon
+async def notify_twitter_update(update, context) -> None:
+    # Burada Twitter kullanıcısını belirleyelim
+    twitter_target = "DeAli33"  # Bu kısmı dinamik hale getirebilirsiniz
+    tweet_text, tweet_url = get_twitter_updates(twitter_target)
+
+    if tweet_text and tweet_url:
+        user_id = update.message.from_user.id
+        chat_id = update.message.chat.id
+
+        # Kaynak ve hedef kanal bilgilerini alalım
+        source_channel = None
+        target_channel = None
+        for info in user_info.values():
+            if info['source_channel'] == chat_id:
+                source_channel = info['source_channel']
+                target_channel = info['target_channel']
+                break
+
+        if source_channel is None or target_channel is None:
+            return
+
+        # Admin kontrolü
+        is_admin = await is_user_admin(context, source_channel, user_id)
+        if not is_admin:
+            return
+
+        # Tweet'e git butonunu ekleyelim
+        keyboard = InlineKeyboardMarkup(
+            [[InlineKeyboardButton("Tweet'e Git", url=tweet_url)]]
+        )
+
+        # Twitter güncellemesini hedef kanala gönder
+        try:
+            await context.bot.send_message(
+                chat_id=target_channel,
+                text=f"🔔 {twitter_target} Twitter'da bir güncelleme yaptı!\n\n{tweet_text}",
+                reply_markup=keyboard
+            )
+        except Exception as e:
+            await update.message.reply_text(f"Bir hata oluştu: {e}")
