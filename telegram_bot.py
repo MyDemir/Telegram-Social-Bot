@@ -54,7 +54,8 @@ async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 # Mesajları kopyalamak için handler
 async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
-    
+
+    # Eğer kanal bilgisi yoksa, işlem yapma
     if user_id not in user_info:
         await update.message.reply_text('Lütfen önce kanal bilgilerini girin.')
         return
