@@ -63,7 +63,7 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     target_channel = user_info[user_id]['target_channel']
     
     # Mesajın kaynak kanalından gelip gelmediğini kontrol et
-    if update.message.chat.id != int(source_channel):  # Kaynak kanal ID'si doğrulanır
+    if update.message.chat.id != int(source_channel):  # source_channel ID'si doğrulanır
         return  # Eğer kaynaktan gelmiyorsa, işlem yapılmaz
 
     # Metin mesajını hedef kanala ilet
@@ -74,20 +74,20 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             await update.message.reply_text(f"Bir hata oluştu: {e}")
     
     # Fotoğraf, video, dosya gibi medya mesajlarını ilet
-if update.message.photo:
-    try:
-        await context.bot.send_photo(target_channel, update.message.photo[-1].file_id, caption=update.message.caption)
-    except BadRequest as e:
-        await update.message.reply_text(f"Bir hata oluştu: {e}")
+    if update.message.photo:
+        try:
+            await context.bot.send_photo(target_channel, update.message.photo[-1].file_id, caption=update.message.caption)
+        except BadRequest as e:
+            await update.message.reply_text(f"Bir hata oluştu: {e}")
     
-if update.message.video:
-    try:
-        await context.bot.send_video(target_channel, update.message.video.file_id, caption=update.message.caption)
-    except BadRequest as e:
-        await update.message.reply_text(f"Bir hata oluştu: {e}")
+    if update.message.video:
+        try:
+            await context.bot.send_video(target_channel, update.message.video.file_id, caption=update.message.caption)
+        except BadRequest as e:
+            await update.message.reply_text(f"Bir hata oluştu: {e}")
     
-if update.message.document:
-    try:
-        await context.bot.send_document(target_channel, update.message.document.file_id)
-    except BadRequest as e:
-        await update.message.reply_text(f"Bir hata oluştu: {e}")
+    if update.message.document:
+        try:
+            await context.bot.send_document(target_channel, update.message.document.file_id)
+        except BadRequest as e:
+            await update.message.reply_text(f"Bir hata oluştu: {e}")
