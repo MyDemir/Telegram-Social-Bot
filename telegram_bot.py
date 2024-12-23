@@ -2,7 +2,7 @@ import json
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.error import BadRequest
-from twitter import get_twitter_updates  # Twitter güncellemelerini almak için ekledik
+import tweepy  # Twitter API için
 
 # Kullanıcı bilgilerini saklayacak JSON dosyasını açma
 def load_user_info():
@@ -17,6 +17,18 @@ def save_user_info(user_info):
         json.dump(user_info, file, indent=4)
 
 user_info = load_user_info()
+
+# Twitter API ayarları
+def get_twitter_api():
+    # Burada Twitter API anahtarlarını girmeniz gerekecek
+    consumer_key = "YOUR_CONSUMER_KEY"
+    consumer_secret = "YOUR_CONSUMER_SECRET"
+    access_token = "YOUR_ACCESS_TOKEN"
+    access_token_secret = "YOUR_ACCESS_TOKEN_SECRET"
+    
+    auth = tweepy.OAuth1UserHandler(consumer_key, consumer_secret, access_token, access_token_secret)
+    api = tweepy.API(auth)
+    return api
 
 # Start komutu
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -65,6 +77,18 @@ async def set_twitter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         await update.message.reply_text(f"Twitter kullanıcı adı {twitter_user} olarak ayarlandı!")
     else:
         await update.message.reply_text("Lütfen bir Twitter kullanıcı adı girin. Örnek: /set_twitter @kullaniciadi")
+
+# Twitter güncellemelerini alma fonksiyonu
+async def get_twitter_updates(twitter_user):
+    api = get_twitter_api()
+    try:
+        tweets = api.user_timeline(screen_name=twitter_user, count=5, tweet_mode="extended")  # Son 5 tweeti al
+        updates = ""
+        for tweet in tweets:
+            updates += f"📝 {tweet.full_text}\n\n"
+        return updates if updates else "Yeni bir tweet bulunamadı."
+    except Exception as e:
+        return f"Twitter'dan güncellemeler alınırken bir hata oluştu: {e}"
 
 # Kanal ID'si alma
 async def get_channel_id(context, username):
