@@ -10,14 +10,12 @@ def get_twitter_updates(twitter_target: str) -> tuple:
 
         # XML parse işlemi
         root = ElementTree.fromstring(response.content)
-        latest_item = root.find(".//channel/item")  # Son güncelleme
+        latest_item = root.find(".//channel/item")  # Son güncellemeyi al
 
-        if latest_item is not None:
-            tweet_title = latest_item.find("title").text
-            tweet_link = latest_item.find("link").text
-            return tweet_title, tweet_link
-        else:
-            return "Güncellemeler bulunamadı.", None
+        tweet_text = latest_item.find("title").text if latest_item else None
+        tweet_url = latest_item.find("link").text if latest_item else None
+
+        return tweet_text, tweet_url
 
     except requests.RequestException as e:
         return f"Twitter'dan veri çekme hatası: {e}", None
