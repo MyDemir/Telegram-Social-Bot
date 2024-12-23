@@ -2,7 +2,7 @@
 import os
 from dotenv import load_dotenv
 from telegram_bot import start  # telegram_bot.py'dan start fonksiyonunu import et
-from telegram.ext import ApplicationBuilder, CommandHandler
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 # .env dosyasını yükleme
 load_dotenv()
@@ -13,8 +13,9 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 if not TELEGRAM_BOT_TOKEN:
     raise ValueError("Bot tokeni bulunamadı. Lütfen .env dosyasına TELEGRAM_BOT_TOKEN ekleyin.")
 
-def help_message() -> str:
-    return (
+async def help_message(update, context):
+    """Kullanıcılara komutları gösterir."""
+    await update.message.reply_text(
         "Merhaba! Botun komutları şunlardır:\n\n"
         "/start - Botu başlatır ve komutları gösterir.\n"
         "/set_channels <kaynak_kanal> <hedef_kanal> - Kaynak ve hedef kanalları ayarlayın.\n"
