@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
-from telegram_bot import start, set_channels, set_twitter, send_channel_update_notification, get_twitter_updates
+from telegram_bot import start, set_channels, set_twitter, send_channel_update_notification
 
 def main():
     load_dotenv()
