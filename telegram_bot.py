@@ -2,6 +2,7 @@ import json
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.error import BadRequest
+from twitter import get_twitter_updates  # Twitter güncellemelerini almak için ekledik
 
 # Kullanıcı bilgilerini saklayacak JSON dosyasını açma
 def load_user_info():
@@ -21,7 +22,8 @@ user_info = load_user_info()
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
         "Merhaba! Bu bot, bir kanalda paylaşılan gönderileri diğer kanala bildirmek için tasarlandı.\n\n"
-        "Kullanım: /set_channels @kaynakkanal @hedefkanal"
+        "Kullanım: /set_channels @kaynakkanal @hedefkanal\n"
+        "Twitter kullanıcı adı için: /set_twitter @kullaniciadi"
     )
 
 # Kanal ayarlama komutu
@@ -50,6 +52,17 @@ async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             await update.message.reply_text("Kanal bilgileri doğrulanamadı. Lütfen kullanıcı adını kontrol edin.")
     else:
         await update.message.reply_text("Lütfen iki kanal adı girin. Örnek: /set_channels @kaynakkanal @hedefkanal")
+
+# Twitter kullanıcı adı ayarlama komutu
+async def set_twitter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user_id = update.message.from_user.id
+    if context.args:
+        twitter_user = context.args[0]
+        user_info[user_id]["twitter_user"] = twitter_user
+        save_user_info(user_info)
+        await update.message.reply_text(f"Twitter kullanıcı adı {twitter_user} olarak ayarlandı!")
+    else:
+        await update.message.reply_text("Lütfen bir Twitter kullanıcı adı girin. Örnek: /set_twitter @kullaniciadi")
 
 # Kanal ID'si alma
 async def get_channel_id(context, username):
@@ -91,6 +104,12 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if not is_admin:
         return
     
+    # Twitter güncellemelerini al
+    twitter_user = user_info.get(user_id, {}).get("twitter_user")
+    twitter_updates = ""
+    if twitter_user:
+        twitter_updates = await get_twitter_updates(twitter_user)  # get_twitter_updates fonksiyonu çağrılıyor
+
     source_channel_link = f"https://t.me/{update.message.chat.username}" if update.message.chat.username else "Kanalı Görüntüle"
     keyboard = InlineKeyboardMarkup(
         [[InlineKeyboardButton("Kanala Git", url=source_channel_link)]]
@@ -99,7 +118,8 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     try:
         await context.bot.send_message(
             chat_id=target_channel,
-            text="🔔 Yeni içerik var! Kaynak kanala göz atın! 🔔",
+            text=f"🔔 Yeni içerik var! Kaynak kanala göz atın! 🔔\n\n"
+                 f"Twitter Güncellemeleri:\n{twitter_updates}",
             reply_markup=keyboard
         )
     except BadRequest as e:
