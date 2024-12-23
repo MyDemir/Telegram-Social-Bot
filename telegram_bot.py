@@ -68,24 +68,24 @@ async def forward_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
     # Mesaj türüne göre işlemi belirleme
     try:
+        # Metin mesajını gönder
         if update.message.text:
-            # Metin mesajı varsa, metni gönder
             await context.bot.send_message(target_channel, update.message.text)
 
+        # Fotoğraf gönder
         if update.message.photo:
-            # Fotoğraf varsa, fotoğrafı gönder
             await context.bot.send_photo(target_channel, update.message.photo[-1].file_id)
 
+        # Video gönder
         if update.message.video:
-            # Video varsa, videoyu gönder
             await context.bot.send_video(target_channel, update.message.video.file_id)
 
+        # Dosya gönder
         if update.message.document:
-            # Dosya varsa, dosyayı gönder
             await context.bot.send_document(target_channel, update.message.document.file_id)
 
+        # GIF gönder
         if update.message.animation:
-            # GIF varsa, GIF'i gönder
             await context.bot.send_animation(target_channel, update.message.animation.file_id)
 
     except BadRequest as e:
