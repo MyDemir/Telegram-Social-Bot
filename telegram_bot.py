@@ -22,7 +22,8 @@ user_info = load_user_info()
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
         "Merhaba! Bu bot, bir kanalda paylaşılan gönderileri diğer kanala bildirmek için tasarlandı.\n\n"
-        "Kullanım: /set_channels @kaynakkanal @hedefkanal"
+        "Kullanım: /set_channels @kaynakkanal @hedefkanal\n\n"
+        "Twitter güncellemeleri almak için: /set_twitter @TwitterKullaniciAdi"
     )
 
 # Kanal ayarlama komutu
@@ -51,6 +52,25 @@ async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             await update.message.reply_text("Kanal bilgileri doğrulanamadı. Lütfen kullanıcı adını kontrol edin.")
     else:
         await update.message.reply_text("Lütfen iki kanal adı girin. Örnek: /set_channels @kaynakkanal @hedefkanal")
+
+# Twitter kullanıcı adı ayarlama
+async def set_twitter_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user_id = update.message.from_user.id
+    twitter_username = update.message.text.strip().split()[1]  # Kullanıcıdan alınan Twitter kullanıcı adını alıyoruz
+
+    if not twitter_username:
+        await update.message.reply_text("Lütfen geçerli bir Twitter kullanıcı adı girin. Örnek: /set_twitter @TwitterKullaniciAdi")
+        return
+
+    # Kullanıcı bilgilerine Twitter kullanıcı adı ekliyoruz
+    if user_id not in user_info:
+        user_info[user_id] = {}
+
+    user_info[user_id]["twitter_username"] = twitter_username
+    save_user_info(user_info)
+
+    await update.message.reply_text(f"Twitter kullanıcı adı ayarlandı: {twitter_username}\n\n"
+                                  "Güncellemeler almak için bekleyin.")
 
 # Kanal ID'si alma
 async def get_channel_id(context, username):
@@ -109,11 +129,17 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
 # Twitter güncellemelerini bildiren fonksiyon
 async def notify_twitter_update(update, context) -> None:
-    twitter_target = "DeAli33"  # Burada Twitter kullanıcısını belirleyelim
-    tweet_text, tweet_url = get_twitter_updates(twitter_target)
+    # Kullanıcının Twitter kullanıcı adını alıyoruz
+    user_id = update.message.from_user.id
+    twitter_username = user_info.get(user_id, {}).get("twitter_username")
+
+    if not twitter_username:
+        await update.message.reply_text("Twitter kullanıcı adı ayarlanmamış. Lütfen /set_twitter komutunu kullanarak Twitter kullanıcı adınızı ayarlayın.")
+        return
+
+    tweet_text, tweet_url = get_twitter_updates(twitter_username)
 
     if tweet_text and tweet_url:
-        user_id = update.message.from_user.id
         chat_id = update.message.chat.id
 
         # Kaynak ve hedef kanal bilgilerini alalım
@@ -141,7 +167,7 @@ async def notify_twitter_update(update, context) -> None:
         try:
             await context.bot.send_message(
                 chat_id=target_channel,
-                text=f"🔔 {twitter_target} Twitter'da bir güncelleme yaptı!\n\n{tweet_text}",
+                text=f"🔔 {twitter_username} Twitter'da bir güncelleme yaptı!\n\n{tweet_text}",
                 reply_markup=keyboard
             )
         except Exception as e:
