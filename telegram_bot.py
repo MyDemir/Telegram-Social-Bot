@@ -1,18 +1,7 @@
 import json
-import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.error import BadRequest
-
-# Logger ayarlaması (hem konsola hem de dosyaya log kaydedecek şekilde yapılandırdık)
-logging.basicConfig(
-    format='%(asctime)s - %(message)s',
-    level=logging.INFO,
-    handlers=[
-        logging.StreamHandler(),  # Konsola log yazma
-        logging.FileHandler("bot_log.txt")  # Dosyaya log yazma
-    ]
-)
 
 # Kullanıcı bilgilerini saklayacak JSON dosyasını açma
 def load_user_info():
@@ -77,30 +66,33 @@ async def forward_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if update.message.chat.id != int(source_channel):  # source_channel ID'si doğrulanır
         return  # Eğer kaynaktan gelmiyorsa, işlem yapılmaz
 
-    # Mesajı hedef kanala iletmek için
     try:
         if update.message.text:
+            # Metin mesajı gönder
             await context.bot.send_message(target_channel, update.message.text)
-            logging.info(f"Metin mesajı gönderildi. Hedef Kanal: {target_channel}")
         
         elif update.message.photo:
             # Fotoğraf gönder
             photo = update.message.photo[-1]  # Fotoğrafın en yüksek çözünürlüğünü alıyoruz
-            await context.bot.send_photo(target_channel, photo.file_id)
-            logging.info(f"Fotoğraf gönderildi. Hedef Kanal: {target_channel}")
+            caption = "Bu fotoğraf açıklaması"
+            await context.bot.send_photo(target_channel, photo.file_id, caption=caption)
         
         elif update.message.video:
             # Video gönder
-            await context.bot.send_video(target_channel, update.message.video.file_id)
-            logging.info(f"Video gönderildi. Hedef Kanal: {target_channel}")
+            video = update.message.video.file_id
+            await context.bot.send_video(target_channel, video)
+        
+        elif update.message.audio:
+            # Ses gönder
+            audio = update.message.audio.file_id
+            await context.bot.send_audio(target_channel, audio)
         
         elif update.message.document:
             # Belge gönder
-            await context.bot.send_document(target_channel, update.message.document.file_id)
-            logging.info(f"Belge gönderildi. Hedef Kanal: {target_channel}")
+            document = update.message.document.file_id
+            await context.bot.send_document(target_channel, document)
 
     except BadRequest as e:
-        logging.error(f"Mesaj gönderilirken hata oluştu: {e}")
         await update.message.reply_text(f"Bir hata oluştu: {e}")
 
 # X (Twitter) güncellemelerini gönderme fonksiyonu
