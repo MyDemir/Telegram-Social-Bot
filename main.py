@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from telegram_bot import start, set_channels, forward_content
+from telegram_bot import start, set_channels, forward_content, forward_messages
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
 
 # .env dosyasını yükleme
