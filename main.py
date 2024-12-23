@@ -1,8 +1,7 @@
-# main.py
 import os
 from dotenv import load_dotenv
-from telegram_bot import start  # telegram_bot.py'dan start fonksiyonunu import et
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram_bot import start, set_channels, set_twitter  # telegram_bot.py'dan fonksiyonları import et
+from telegram.ext import ApplicationBuilder, CommandHandler
 
 # .env dosyasını yükleme
 load_dotenv()
@@ -28,7 +27,9 @@ def main() -> None:
 
     # Komutlar
     application.add_handler(CommandHandler("start", start))  # start komutunu telegram_bot.py'dan kullan
-    application.add_handler(CommandHandler("help", help_message))  # help komutu ile yardım mesajını gönderir
+    application.add_handler(CommandHandler("help", help_message))  # help komutunu ekle
+    application.add_handler(CommandHandler("set_channels", set_channels))  # /set_channels komutunu ekle
+    application.add_handler(CommandHandler("set_twitter", set_twitter))  # /set_twitter komutunu ekle
 
     # Uygulamayı başlat
     application.run_polling()
