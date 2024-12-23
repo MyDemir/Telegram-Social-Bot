@@ -58,6 +58,8 @@ async def set_twitter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     user_id = update.message.from_user.id
     if context.args:
         twitter_user = context.args[0]
+        if user_id not in user_info:
+            user_info[user_id] = {}
         user_info[user_id]["twitter_user"] = twitter_user
         save_user_info(user_info)
         await update.message.reply_text(f"Twitter kullanıcı adı {twitter_user} olarak ayarlandı!")
