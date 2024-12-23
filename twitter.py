@@ -5,25 +5,31 @@ def get_twitter_updates(twitter_target: str) -> tuple:
     """X (Twitter) güncellemelerini Nitter üzerinden RSS ile alır."""
     url = f"https://nitter.poast.org/{twitter_target}/rss"  # Nitter RSS URL'si
     try:
-        # Nitter RSS feed'ini al
         response = requests.get(url)
         response.raise_for_status()  # HTTP hatalarını kontrol et
+
+        # Yanıtı kontrol et
+        print(f"URL: {url}")
+        print(f"Response Status Code: {response.status_code}")
         
-        # XML verisini parse et
+        # XML parse işlemi
         root = ElementTree.fromstring(response.content)
         latest_item = root.find(".//channel/item")  # Son güncellemeyi al
 
-        # Tweet metni ve URL'sini al
-        tweet_text = latest_item.find("title").text if latest_item else None
-        tweet_url = latest_item.find("link").text if latest_item else None
-
-        if tweet_text and tweet_url:
-            return tweet_text, tweet_url  # Eğer veri bulunursa döndürüyoruz
+        if latest_item is not None:
+            tweet_text = latest_item.find("title").text
+            tweet_url = latest_item.find("link").text
+            print(f"Tweet Text: {tweet_text}")
+            print(f"Tweet URL: {tweet_url}")
+            return tweet_text, tweet_url
         else:
-            return "Son tweet bulunamadı.", None  # Eğer tweet yoksa hata mesajı döndür
+            print("Son tweet bulunamadı.")
+            return None, None
 
     except requests.RequestException as e:
-        return f"Twitter'dan veri çekme hatası: {e}", None  # Bağlantı veya HTTP hatası
+        print(f"Twitter'dan veri çekme hatası: {e}")
+        return f"Twitter'dan veri çekme hatası: {e}", None
 
     except Exception as e:
-        return f"Bir hata oluştu: {e}", None  # Diğer hatalar
+        print(f"Bir hata oluştu: {e}")
+        return f"Bir hata oluştu: {e}", None
