@@ -1,5 +1,5 @@
 import json
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto, InputMediaVideo, InputMediaAnimation, InputMediaDocument
 from telegram.ext import ContextTypes
 from telegram.error import BadRequest
 
@@ -66,30 +66,37 @@ async def forward_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if update.message.chat.id != int(source_channel):  # source_channel ID'si doğrulanır
         return  # Eğer kaynaktan gelmiyorsa, işlem yapılmaz
 
-    # Mesaj türüne göre işlemi belirleme
-    try:
-        # Metin mesajını gönder
-        if update.message.text:
-            await context.bot.send_message(target_channel, update.message.text)
+    media_group = []
+    if update.message.text:
+        media_group.append(update.message.text)
 
-        # Fotoğraf gönder
-        if update.message.photo:
-            await context.bot.send_photo(target_channel, update.message.photo[-1].file_id)
+    # Fotoğraf gönderme
+    if update.message.photo:
+        for photo in update.message.photo:
+            media_group.append(InputMediaPhoto(photo.file_id))
+    
+    # Video gönderme
+    if update.message.video:
+        media_group.append(InputMediaVideo(update.message.video.file_id))
 
-        # Video gönder
-        if update.message.video:
-            await context.bot.send_video(target_channel, update.message.video.file_id)
+    # GIF gönderme
+    if update.message.animation:
+        media_group.append(InputMediaAnimation(update.message.animation.file_id))
 
-        # Dosya gönder
-        if update.message.document:
-            await context.bot.send_document(target_channel, update.message.document.file_id)
+    # Dosya gönderme
+    if update.message.document:
+        media_group.append(InputMediaDocument(update.message.document.file_id))
 
-        # GIF gönder
-        if update.message.animation:
-            await context.bot.send_animation(target_channel, update.message.animation.file_id)
-
-    except BadRequest as e:
-        await update.message.reply_text(f"Bir hata oluştu: {e}")
+    if media_group:
+        try:
+            if len(media_group) == 1:
+                # Sadece metin veya tek medya öğesi varsa
+                await context.bot.send_message(target_channel, media_group[0])
+            else:
+                # Birden fazla medya öğesi varsa, media_group kullanarak gönder
+                await context.bot.send_media_group(target_channel, media_group)
+        except BadRequest as e:
+            await update.message.reply_text(f"Bir hata oluştu: {e}")
 
 # X (Twitter) güncellemelerini gönderme fonksiyonu
 async def forward_twitter_updates(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
