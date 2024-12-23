@@ -1,5 +1,5 @@
 import json
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update
 from telegram.ext import ContextTypes
 from telegram.error import BadRequest
 
@@ -52,7 +52,7 @@ async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         await update.message.reply_text('Lütfen iki kanal ID\'si girin. Örnek: /set_channels @kanal1 @kanal2')
 
 # Mesajları kopyalamak için handler
-async def forward_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
     
     if user_id not in user_info:
@@ -61,60 +61,62 @@ async def forward_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
     source_channel = user_info[user_id]['source_channel']
     target_channel = user_info[user_id]['target_channel']
-    
-    # Mesajın kaynak kanalından gelip gelmediğini kontrol et
-    if update.message.chat.id != int(source_channel):  # source_channel ID'si doğrulanır
-        return  # Eğer kaynaktan gelmiyorsa, işlem yapılmaz
 
+    # Mesajın türünü kontrol et ve uygun fonksiyonu çağır
+    if update.message.text:  # Eğer metin mesajı varsa
+        await send_message_to_channel(context, target_channel, update.message.text)
+    elif update.message.photo:  # Eğer fotoğraf varsa
+        photo = update.message.photo[-1].file_id  # En yüksek çözünürlüklü fotoğrafı al
+        await send_photo_to_channel(context, target_channel, photo)
+    elif update.message.video:  # Eğer video varsa
+        video = update.message.video.file_id
+        await send_video_to_channel(context, target_channel, video)
+    elif update.message.document:  # Eğer dosya varsa
+        file = update.message.document.file_id
+        await send_document_to_channel(context, target_channel, file)
+    else:
+        print("Unsupported message type.")
+
+# Herhangi bir mesajı hedef kanala ilet
+async def send_message_to_channel(context, target_channel, message):
     try:
-        if update.message.text:
-            # Metin mesajı gönder
-            await context.bot.send_message(target_channel, update.message.text)
-        
-        elif update.message.photo:
-            # Fotoğraf gönder
-            photo = update.message.photo[-1]  # Fotoğrafın en yüksek çözünürlüğünü alıyoruz
-            caption = "Bu fotoğraf açıklaması"
-            await context.bot.send_photo(target_channel, photo.file_id, caption=caption)
-        
-        elif update.message.video:
-            # Video gönder
-            video = update.message.video.file_id
-            await context.bot.send_video(target_channel, video)
-        
-        elif update.message.audio:
-            # Ses gönder
-            audio = update.message.audio.file_id
-            await context.bot.send_audio(target_channel, audio)
-        
-        elif update.message.document:
-            # Belge gönder
-            document = update.message.document.file_id
-            await context.bot.send_document(target_channel, document)
-
+        await context.bot.send_message(
+            chat_id=target_channel,
+            text=message
+        )
+        print("Message sent successfully")
     except BadRequest as e:
-        await update.message.reply_text(f"Bir hata oluştu: {e}")
+        print(f"Error sending message: {e}")
 
-# X (Twitter) güncellemelerini gönderme fonksiyonu
-async def forward_twitter_updates(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user_id = update.message.from_user.id
-    if user_id not in user_info:
-        await update.message.reply_text('Lütfen önce kanal bilgilerini girin.')
-        return
+# Fotoğrafı hedef kanala ilet
+async def send_photo_to_channel(context, target_channel, photo):
+    try:
+        await context.bot.send_photo(
+            chat_id=target_channel,
+            photo=photo
+        )
+        print("Photo sent successfully")
+    except BadRequest as e:
+        print(f"Error sending photo: {e}")
 
-    twitter_target = user_info[user_id].get('twitter_target')
-    if not twitter_target:
-        await update.message.reply_text('Twitter hedefi belirlenmedi.')
-        return
+# Video'yu hedef kanala ilet
+async def send_video_to_channel(context, target_channel, video):
+    try:
+        await context.bot.send_video(
+            chat_id=target_channel,
+            video=video
+        )
+        print("Video sent successfully")
+    except BadRequest as e:
+        print(f"Error sending video: {e}")
 
-    # X (Twitter) güncellemelerini al
-    twitter_updates = get_twitter_updates(twitter_target)
-    await update.message.reply_text(
-        f"Twitter hedefinden alınan güncellemeler:\n{twitter_updates}"
-    )
-
-# Twitter güncellemelerini almak için placeholder fonksiyonu
-def get_twitter_updates(target):
-    # Gerçek X (Twitter) güncellemeleri almak için burada API kullanabilirsiniz.
-    # Şu an için örnek bir mesaj döndürüyor.
-    return f"Burada {target} için güncellemeler olacak."
+# Dosyayı hedef kanala ilet
+async def send_document_to_channel(context, target_channel, file):
+    try:
+        await context.bot.send_document(
+            chat_id=target_channel,
+            document=file
+        )
+        print("Document sent successfully")
+    except BadRequest as e:
+        print(f"Error sending document: {e}")
