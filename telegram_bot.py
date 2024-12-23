@@ -66,9 +66,43 @@ async def forward_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if update.message.chat.id != int(source_channel):  # source_channel ID'si doğrulanır
         return  # Eğer kaynaktan gelmiyorsa, işlem yapılmaz
 
-    # Mesajları hedef kanala ilet
+    # Mesaj türüne göre işlemi belirleme
     try:
-        await context.bot.send_message(target_channel, update.message.text)
+        # Metin mesajı + medya varsa
+        if update.message.text and update.message.photo:
+            # Metin ve fotoğrafı aynı anda gönderme
+            await context.bot.send_message(target_channel, update.message.text)
+            await context.bot.send_photo(target_channel, update.message.photo[-1].file_id)
+        elif update.message.text and update.message.video:
+            # Metin ve video aynı anda gönderme
+            await context.bot.send_message(target_channel, update.message.text)
+            await context.bot.send_video(target_channel, update.message.video.file_id)
+        elif update.message.text and update.message.document:
+            # Metin ve dosya aynı anda gönderme
+            await context.bot.send_message(target_channel, update.message.text)
+            await context.bot.send_document(target_channel, update.message.document.file_id)
+        elif update.message.text and update.message.animation:
+            # Metin ve GIF aynı anda gönderme
+            await context.bot.send_message(target_channel, update.message.text)
+            await context.bot.send_animation(target_channel, update.message.animation.file_id)
+        elif update.message.text:
+            # Sadece metin gönderme
+            await context.bot.send_message(target_channel, update.message.text)
+        elif update.message.photo:
+            # Fotoğraf gönderme
+            await context.bot.send_photo(target_channel, update.message.photo[-1].file_id)
+        elif update.message.video:
+            # Video gönderme
+            await context.bot.send_video(target_channel, update.message.video.file_id)
+        elif update.message.document:
+            # Dosya gönderme
+            await context.bot.send_document(target_channel, update.message.document.file_id)
+        elif update.message.animation:
+            # GIF gönderme
+            await context.bot.send_animation(target_channel, update.message.animation.file_id)
+        else:
+            # Desteklenmeyen mesaj türü
+            await update.message.reply_text('Bu tür mesaj desteklenmiyor.')
     except BadRequest as e:
         await update.message.reply_text(f"Bir hata oluştu: {e}")
 
