@@ -83,9 +83,9 @@ async def get_channel_id(context, username):
 async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
     
+    # Eğer kullanıcı kanal bilgilerini girmemişse işlem yapılmaz
     if user_id not in user_info:
-        await update.message.reply_text('Lütfen önce kanal bilgilerini girin.')
-        return
+        return  # Kanal bilgileri girilmediği için işlem yapılmaz
 
     source_channel = user_info[user_id]['source_channel']
     target_channel = user_info[user_id]['target_channel']
@@ -101,13 +101,13 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     try:
         # Buton oluşturuluyor
         keyboard = [
-            [InlineKeyboardButton("Yeni İçerike Bak", url=source_channel_link)]
+            [InlineKeyboardButton("Kaynak Kanala Git", url=source_channel_link)]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
         await context.bot.send_message(
             target_channel,
-            "🔔 Analiz Kanalimizda Yeni içerik var! Kanala göz atmak için butona tıklayın. 🔔",
+            "🔔 Yeni içerik var! Kaynak kanala göz atmak için butona tıklayın. 🔔",
             reply_markup=reply_markup
         )
     except BadRequest as e:
