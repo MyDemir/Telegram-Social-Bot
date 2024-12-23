@@ -54,16 +54,21 @@ async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         await update.message.reply_text("Lütfen iki kanal adı girin. Örnek: /set_channels @kaynakkanal @hedefkanal")
 
 # Twitter kullanıcı adı ayarlama
-async def set_twitter_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def set_twitter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
     user_input = update.message.text.strip().split()
 
-    if len(user_input) > 1:  # Kullanıcı adı düzgün girildiyse
+    if len(user_input) == 2:  # Kullanıcı adı düzgün girildiyse
         twitter_username = user_input[1].lstrip('@')  # '@' işaretini kaldırıyoruz
-        user_info[user_id] = {
-            "twitter_username": twitter_username
-        }
-        save_user_info(user_info)
+        
+        # Kullanıcının mevcut bilgilerini alıyoruz
+        if user_id not in user_info:
+            user_info[user_id] = {}  # Eğer kullanıcı daha önce eklenmemişse yeni bir kayıt oluşturuyoruz
+
+        # Mevcut kanal bilgilerini koruyarak sadece twitter kullanıcı adını ekliyoruz
+        user_info[user_id]["twitter_username"] = twitter_username  # Twitter bilgisini güncelliyoruz
+        
+        save_user_info(user_info)  # Kullanıcı bilgilerini kaydediyoruz
 
         await update.message.reply_text(
             f"Twitter kullanıcı adı olarak @{twitter_username} kaydedildi! Şimdi bu kullanıcıya ait güncellemeleri alabilirsiniz."
