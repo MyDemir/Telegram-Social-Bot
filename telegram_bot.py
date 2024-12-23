@@ -4,14 +4,6 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.error import BadRequest
 
-async def test_twitter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    twitter_username = "elonmusk"  # Test için sabit bir kullanıcı adı
-    tweet_text, tweet_url = get_twitter_updates(twitter_username)
-
-    if tweet_text and tweet_url:
-        await update.message.reply_text(f"🔔 Test Tweet:\n\n{tweet_text}\n\n{tweet_url}")
-    else:
-        await update.message.reply_text("Test başarısız. Güncelleme alınamadı.")
 
 # Logger kurulumu
 logging.basicConfig(
@@ -20,6 +12,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+async def test_twitter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    twitter_username = "elonmusk"  # Test için bir kullanıcı adı
+    tweet_text, tweet_url = get_twitter_updates(twitter_username)
+
+    if tweet_text and tweet_url:
+        await update.message.reply_text(f"🔔 Test Tweet:\n\n{tweet_text}\n\n{tweet_url}")
+    else:
+        await update.message.reply_text("Test başarısız. Güncelleme alınamadı.")
 # Kullanıcı bilgilerini saklayacak JSON dosyasını açma
 def load_user_info():
     try:
