@@ -126,3 +126,22 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         )
     except BadRequest as e:
         await update.message.reply_text(f"Bir hata oluştu: {e}")
+
+# Twitter kullanıcı adı ayarlamak için fonksiyon
+async def set_twitter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user_id = update.message.from_user.id
+    user_input = update.message.text.strip().split()
+
+    if len(user_input) == 2 and user_input[0] == '/set_twitter':
+        twitter_username = user_input[1]
+
+        # Kullanıcının Twitter adı kaydediliyor
+        if user_id not in user_info:
+            user_info[user_id] = {}
+        
+        user_info[user_id]["twitter_username"] = twitter_username
+        save_user_info(user_info)
+
+        await update.message.reply_text(f"Twitter kullanıcı adı ayarlandı: {twitter_username}")
+    else:
+        await update.message.reply_text("Lütfen geçerli bir Twitter kullanıcı adı girin. Örnek: /set_twitter @kullaniciadi")
