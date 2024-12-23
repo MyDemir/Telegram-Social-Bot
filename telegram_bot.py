@@ -54,8 +54,7 @@ async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 # Mesajları kopyalamak için handler
 async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
-
-    # Eğer kanal bilgisi yoksa, işlem yapma
+    
     if user_id not in user_info:
         await update.message.reply_text('Lütfen önce kanal bilgilerini girin.')
         return
@@ -63,45 +62,31 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     source_channel = user_info[user_id]['source_channel']
     target_channel = user_info[user_id]['target_channel']
     
-    # Kaynak kanalında iletilen mesajları hedef kanala ilet
+    # Mesajın kaynak kanalından gelip gelmediğini kontrol et
     if update.message.chat.id != int(source_channel):  # source_channel ID'si doğrulanır
         return  # Eğer kaynaktan gelmiyorsa, işlem yapılmaz
 
-    # Bilgilendirme mesajı (daha kısa ve buton eklenmiş)
-    informative_message = (
-        f"🔔 *{source_channel} kanalında yeni içerik var!* 🔔\n\n"
-        f"👉 *Göz atmak için aşağıdaki butona tıklayın!* 👈"
-    )
+    # Kaynak kanalın kullanıcı adını almak ve URL oluşturmak
+    channel_username = source_channel.lstrip('@')  # '@' işaretini kaldırıyoruz.
 
-    # MarkdownV2 karakterlerini kaçırma
-    def escape_markdown(text):
-        escape_chars = ["_", "*", "[", "]", "(", ")", "~", "`", ">", "#", "+", "-", ".", "!", "|"]
-        for char in escape_chars:
-            text = text.replace(char, f"\\{char}")
-        return text
+    # Eğer kullanıcı adı yoksa, kanal ID'siyle URL oluşturulamaz. Bu durumda bir hata olabilir veya alternatif yöntem kullanılabilir.
+    if not channel_username:
+        # Burada kanal ID'siyle işlem yapıyoruz (ama kullanıcıya göstermek için kullanıcı adı gerektiği için dikkatli olunmalı).
+        channel_username = str(source_channel)  # Kanal ID'si de kullanılabilir, fakat bu genellikle yaygın değildir.
 
-    informative_message_escaped = escape_markdown(informative_message)
+    # Butonun linki
+    button_url = f"https://t.me/{channel_username}"
 
-    # Bilgilendirme mesajını hedef kanala gönder
+    # Bilgilendirme mesajı
     try:
-        # Bilgilendirme mesajını göndermek ve buton eklemek
-        keyboard = [
-            [InlineKeyboardButton("Kanalı Görüntüle", url=f"https://t.me/{source_channel}")]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await context.bot.send_message(target_channel, informative_message_escaped, parse_mode="MarkdownV2", reply_markup=reply_markup)
-        print(f"[Bilgi] Bilgilendirme mesajı {target_channel} kanalına başarıyla gönderildi.")
+        await context.bot.send_message(
+            target_channel,
+            "🔔 Kaynak kanalımızda yeni içerik var! 🔔",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Kaynak kanala göz at", url=button_url)]]),
+        )
     except BadRequest as e:
-        await update.message.reply_text(f"Bir hata oluştu: {e}")
-        print(f"[Hata] Bilgilendirme mesajı gönderilemedi: {e}")
+        await update.message.reply_text(f"[Hata] Bilgilendirme mesajı gönderilemedi: {e}")
 
-    # Metin mesajını hedef kanala ilet
-    if update.message.text:
-        try:
-            await context.bot.send_message(target_channel, update.message.text)
-        except BadRequest as e:
-            await update.message.reply_text(f"Bir hata oluştu: {e}")
-    
     # Fotoğraf, video, dosya gibi medya mesajlarını ilet
     if update.message.photo:
         try:
