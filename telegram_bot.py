@@ -66,24 +66,22 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if update.message.chat.id != int(source_channel):  # source_channel ID'si doğrulanır
         return  # Eğer kaynaktan gelmiyorsa, işlem yapılmaz
 
-    # Kaynak kanalın iletişim bilgisini al
-    source_channel_username = f"@{source_channel.strip('@')}"
-
-    # Kaynak kanalında bilgilendirme mesajı
-    info_message = (
-        f"🚨 **Yeni Güncelleme!** 🚨\n\n"
-        f"🔔 *Analiz kanalımızda yeni güncellemeler paylaşıldı!* 🔔\n"
-        f"💥 *Lütfen hemen kontrol edin ve en son gelişmeleri kaçırmayın!* 💥\n\n"
-        f"💬 *Kaynak Kanal:* [Buraya tıklayarak ziyaret edin]({source_channel_username})"
+    # Bilgilendirme mesajını güncelleyelim
+    informative_message = (
+        f"Heyy! {source_channel} kanalında yeni güncellemeler paylaşıldı.\n"
+        f"Lütfen kontrol ediniz: {source_channel}\n"
+        f"🔔 *Yeni güncellemeleri kaçırmayın!*\n\n"
+        f"👉 {source_channel} kanalına göz atmak için tıklayın!"
     )
 
-    try:
-        # Kaynak kanalın iletişim bilgisini hedef kanala ilet
-        await context.bot.send_message(target_channel, info_message, parse_mode='MarkdownV2')
+    # Mesajı gönderirken parse_mode='MarkdownV2' kullanarak özel karakterleri kaçırıyoruz
+    informative_message_escaped = informative_message.replace("!", "\!").replace("(", "").replace(")", "").replace("_", "\_").replace("*", "\*").replace("[", "").replace("]", "").replace("`", "\`")
 
+    try:
+        await context.bot.send_message(target_channel, informative_message_escaped, parse_mode="MarkdownV2")
     except BadRequest as e:
         await update.message.reply_text(f"Bir hata oluştu: {e}")
-
+    
     # Metin mesajını hedef kanala ilet
     if update.message.text:
         try:
