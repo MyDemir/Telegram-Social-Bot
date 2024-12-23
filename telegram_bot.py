@@ -63,7 +63,7 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     target_channel = user_info[user_id]['target_channel']
     
     # Mesajın kaynak kanalından gelip gelmediğini kontrol et
-    if update.message.chat.id != int(source_channel):  # source_channel ID'si doğrulanır
+    if update.message.chat.id != int(source_channel):  # Kaynak kanal ID'si doğrulanır
         return  # Eğer kaynaktan gelmiyorsa, işlem yapılmaz
 
     # Metin mesajını hedef kanala ilet
@@ -90,4 +90,4 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         try:
             await context.bot.send_document(target_channel, update.message.document.file_id)
         except BadRequest as e:
-            await update.message.reply_text(f"Bir hata oluştu: {e}")
+            await update.message.reply_text(f"Bir hata oluştu: {e}") be 
