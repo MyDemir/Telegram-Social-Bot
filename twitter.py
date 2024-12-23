@@ -1,35 +1,32 @@
-import requests
-from xml.etree import ElementTree
+import feedparser
+import logging
 
-def get_twitter_updates(twitter_target: str) -> tuple:
-    """X (Twitter) güncellemelerini Nitter üzerinden RSS ile alır."""
-    url = f"https://nitter.poast.org/{twitter_target}/rss"  # Nitter RSS URL'si
+# Logger kurulumu
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.DEBUG  # DEBUG seviyesinde log tutacağız
+)
+logger = logging.getLogger(__name__)
+
+def get_twitter_updates(username):
     try:
-        response = requests.get(url)
-        response.raise_for_status()  # HTTP hatalarını kontrol et
+        # RSS feed URL'si oluşturma
+        rss_url = f"https://nitter.poast.org/{username}/rss"
+        logger.debug(f"RSS URL: {rss_url}")
 
-        # Yanıtı kontrol et
-        print(f"URL: {url}")
-        print(f"Response Status Code: {response.status_code}")
-        
-        # XML parse işlemi
-        root = ElementTree.fromstring(response.content)
-        latest_item = root.find(".//channel/item")  # Son güncellemeyi al
+        feed = feedparser.parse(rss_url)
 
-        if latest_item is not None:
-            tweet_text = latest_item.find("title").text
-            tweet_url = latest_item.find("link").text
-            print(f"Tweet Text: {tweet_text}")
-            print(f"Tweet URL: {tweet_url}")
-            return tweet_text, tweet_url
-        else:
-            print("Son tweet bulunamadı.")
+        if len(feed.entries) == 0:
+            logger.warning(f"@{username} için yeni tweet bulunamadı.")
             return None, None
 
-    except requests.RequestException as e:
-        print(f"Twitter'dan veri çekme hatası: {e}")
-        return f"Twitter'dan veri çekme hatası: {e}", None
+        latest_entry = feed.entries[0]
+        tweet_text = latest_entry.title
+        tweet_url = latest_entry.link
+
+        logger.info(f"Yeni tweet alındı: {tweet_text}")
+        return tweet_text, tweet_url
 
     except Exception as e:
-        print(f"Bir hata oluştu: {e}")
-        return f"Bir hata oluştu: {e}", None
+        logger.error(f"Bir hata oluştu: {e}", exc_info=True)  # Hata detayları ile loglama
+        return None, None
