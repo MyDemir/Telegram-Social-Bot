@@ -66,10 +66,10 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if update.message.chat.id != int(source_channel):  # source_channel ID'si doğrulanır
         return  # Eğer kaynaktan gelmiyorsa, işlem yapılmaz
 
-    # Kaynak kanalın kullanıcı adı veya linki
-    source_channel_username = f"@{source_channel[1:]}"  # Kanal ismi @ ile başlıyorsa, "@"'yı kaldırıyoruz.
+    # Kaynak kanalın iletişim bilgisini al
+    source_channel_username = f"@{source_channel.strip('@')}"
 
-    # Dikkat çekici bilgilendirme mesajı
+    # Kaynak kanalında bilgilendirme mesajı
     info_message = (
         f"🚨 **Yeni Güncelleme!** 🚨\n\n"
         f"🔔 *Analiz kanalımızda yeni güncellemeler paylaşıldı!* 🔔\n"
@@ -77,7 +77,12 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         f"💬 *Kaynak Kanal:* [Buraya tıklayarak ziyaret edin]({source_channel_username})"
     )
 
-    await context.bot.send_message(target_channel, info_message, parse_mode='MarkdownV2')
+    try:
+        # Kaynak kanalın iletişim bilgisini hedef kanala ilet
+        await context.bot.send_message(target_channel, info_message, parse_mode='MarkdownV2')
+
+    except BadRequest as e:
+        await update.message.reply_text(f"Bir hata oluştu: {e}")
 
     # Metin mesajını hedef kanala ilet
     if update.message.text:
