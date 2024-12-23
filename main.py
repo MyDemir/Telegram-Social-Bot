@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from telegram_bot import start, set_channels, set_twitter, send_channel_update_notification
+from twitter import get_twitter_updates  # twitter.py dosyasını ekleyelim
 
 def main():
     load_dotenv()
@@ -12,8 +13,7 @@ def main():
 
     application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
-    application.add_handler(CommandHandler("test_twitter", test_twitter))
-    # Komutları ekle
+    # Komutlar
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("set_channels", set_channels))
     application.add_handler(CommandHandler("set_twitter", set_twitter))
