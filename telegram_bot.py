@@ -33,7 +33,6 @@ async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         source_channel_input = user_input[1]
         target_channel_input = user_input[2]
 
-        # Kanal kullanıcı adını ID'ye çevir
         source_channel_id = await get_channel_id(context, source_channel_input)
         if source_channel_id is None:
             await update.message.reply_text("Kaynak kanal bulunamadı.")
@@ -67,12 +66,19 @@ async def get_channel_id(context, username):
     except Exception:
         return None
 
-# Bilgilendirme mesajı gönderme
+# Kanal adminlerini kontrol etme
+async def is_user_admin(context, chat_id, user_id):
+    try:
+        member = await context.bot.get_chat_member(chat_id, user_id)
+        return member.status in ['administrator', 'creator']
+    except Exception:
+        return False
+
+# Bilgilendirme mesajı gönderme (Admin kontrolü eklendi)
 async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
     chat_id = update.message.chat.id
 
-    # Kaynak kanal ve hedef kanal bilgilerini al
     source_channel = None
     target_channel = None
     for info in user_info.values():
@@ -81,8 +87,14 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             target_channel = info['target_channel']
             break
 
-    # Kanal eşleşmezse işlem yapma
     if source_channel is None or target_channel is None:
+        return
+    
+    # KULLANICI ADMIN Mİ KONTROL ET
+    is_admin = await is_user_admin(context, source_channel, user_id)
+    
+    if not is_admin:
+        # Admin değilse işlem yapma
         return
     
     # Butonlu bilgilendirme mesajı gönder
