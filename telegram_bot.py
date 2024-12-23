@@ -101,13 +101,13 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     try:
         # Buton oluşturuluyor
         keyboard = [
-            [InlineKeyboardButton("Kaynak Kanala Git", url=source_channel_link)]
+            [InlineKeyboardButton("Yeni İçerike Bak", url=source_channel_link)]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
         await context.bot.send_message(
             target_channel,
-            "🔔 Yeni içerik var! Kaynak kanala göz atmak için butona tıklayın. 🔔",
+            "🔔 Analiz Kanalimizda Yeni içerik var! Kanala göz atmak için butona tıklayın. 🔔",
             reply_markup=reply_markup
         )
     except BadRequest as e:
