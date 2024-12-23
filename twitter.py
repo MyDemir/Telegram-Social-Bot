@@ -3,7 +3,12 @@ from bs4 import BeautifulSoup
 
 def get_twitter_updates(twitter_target: str) -> str:
     """X (Twitter) güncellemelerini Nitter üzerinden HTML parsing ile alır."""
-    url = f"https://nitter.net/{twitter_target}"  # Nitter URL'si
+    # "@" işaretini kaldırıyoruz
+    twitter_target = twitter_target.lstrip('@')
+
+    # Nitter URL'si (@" işareti olmayan)
+    url = f"https://nitter.poast.org/{twitter_target}"
+    
     try:
         response = requests.get(url)
         response.raise_for_status()  # HTTP hatalarını kontrol et
