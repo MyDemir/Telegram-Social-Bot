@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from telegram_bot import start, set_channels, forward_messages
+from telegram_bot import start, set_channels, forward_messages, connect_channels
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
 
 # .env dosyasını yükleme
@@ -13,17 +13,16 @@ if not TELEGRAM_BOT_TOKEN:
     raise ValueError("Bot tokeni .env dosyasından alınamadı. Lütfen TELEGRAM_BOT_TOKEN değeri ekleyin.")
 
 def main() -> None:
-    # Telegram botunun token'ını .env dosyasından alıyoruz
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
     # Handler'lar
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("set_channels", set_channels))
+    application.add_handler(CommandHandler("connect", connect_channels))  # /connect komutu
     
-    # Text ve medya mesajlarını alıyoruz, fakat komutları hariç tutuyoruz
-    application.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, forward_messages))  # Hata burada düzeltildi!
+    # Tüm mesajları alıp iletme
+    application.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, forward_messages))
 
-    # Botu çalıştır
     application.run_polling()
 
 if __name__ == "__main__":
