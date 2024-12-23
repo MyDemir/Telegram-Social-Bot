@@ -3,7 +3,7 @@ import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.error import BadRequest
-
+from twitter import get_twitter_updates  # twitter.py fonksiyonunu ekledim
 
 # Logger kurulumu
 logging.basicConfig(
@@ -140,3 +140,18 @@ async def is_user_admin(context, chat_id, user_id):
         return chat_member.status in ['administrator', 'creator']
     except Exception:
         return False
+
+# Twitter güncellemelerini al
+async def get_twitter_update(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user_id = update.message.from_user.id
+    if user_id not in user_info or 'twitter_username' not in user_info[user_id]:
+        await update.message.reply_text("Twitter kullanıcı adı ayarlanmamış.")
+        return
+
+    twitter_username = user_info[user_id]['twitter_username']
+    tweet_text, tweet_url = get_twitter_updates(twitter_username)
+
+    if tweet_text:
+        await update.message.reply_text(f"Son Tweet: {tweet_text}\n{tweet_url}")
+    else:
+        await update.message.reply_text("Son tweet alınamadı.")
