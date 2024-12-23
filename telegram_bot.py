@@ -1,5 +1,5 @@
 import json
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update
 from telegram.ext import ContextTypes
 from telegram.error import BadRequest
 
@@ -79,13 +79,13 @@ async def get_channel_id(context, username):
     except Exception as e:
         return None
 
-# Mesajları kopyalamak için handler
+# Mesajlar geldiğinde yalnızca bilgilendirme mesajı göndermek
 async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
     
-    # Eğer kullanıcı kanal bilgilerini girmemişse işlem yapılmaz
     if user_id not in user_info:
-        return  # Kanal bilgileri girilmediği için işlem yapılmaz
+        await update.message.reply_text('Lütfen önce kanal bilgilerini girin.')
+        return
 
     source_channel = user_info[user_id]['source_channel']
     target_channel = user_info[user_id]['target_channel']
@@ -97,18 +97,11 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     # Kaynak kanalın linkini al
     source_channel_link = f"t.me/{update.message.chat.username}" if update.message.chat.username else f"Kanala Erişim Yok"
 
-    # Kaynak kanal için bilgilendirme mesajı ve buton gönder
+    # Bilgilendirme mesajını hedef kanala gönder
     try:
-        # Buton oluşturuluyor
-        keyboard = [
-            [InlineKeyboardButton("Kaynak Kanala Git", url=source_channel_link)]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-
         await context.bot.send_message(
-            target_channel,
-            "🔔 Yeni içerik var! Kaynak kanala göz atmak için butona tıklayın. 🔔",
-            reply_markup=reply_markup
+            target_channel, 
+            f"🔔 {source_channel_link} kanalında yeni içerik var! 🔔"
         )
     except BadRequest as e:
         await update.message.reply_text(f"Bir hata oluştu: {e}")
