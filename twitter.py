@@ -1,4 +1,3 @@
-# twitter.py
 import requests
 from bs4 import BeautifulSoup
 
@@ -33,3 +32,7 @@ def get_twitter_updates(twitter_target: str) -> str:
 
     except Exception as e:
         return f"Bir hata oluştu: {e}"
+
+def handle_twitter_updates(user_id: int, twitter_user: str) -> str:
+    """Belirli bir kullanıcının belirlediği Twitter kullanıcısından güncellemeleri alır."""
+    return get_twitter_updates(twitter_user)
