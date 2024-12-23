@@ -1,39 +1,26 @@
 import requests
-from bs4 import BeautifulSoup
+from xml.etree import ElementTree
 
-def get_twitter_updates(twitter_target: str) -> str:
-    """X (Twitter) güncellemelerini Nitter üzerinden HTML parsing ile alır."""
-    # "@" işaretini kaldırıyoruz
-    twitter_target = twitter_target.lstrip('@')
-
-    # Nitter URL'si (@" işareti olmayan)
-    url = f"https://nitter.poast.org/{twitter_target}"
-    
+def get_twitter_updates(twitter_target: str) -> tuple:
+    """X (Twitter) güncellemelerini Nitter üzerinden RSS ile alır."""
+    url = f"https://nitter.poast.org/{twitter_target}/rss"  # Nitter RSS URL'si
     try:
         response = requests.get(url)
         response.raise_for_status()  # HTTP hatalarını kontrol et
 
-        # HTML içeriğini BeautifulSoup ile parse ediyoruz
-        soup = BeautifulSoup(response.text, 'html.parser')
+        # XML parse işlemi
+        root = ElementTree.fromstring(response.content)
+        latest_item = root.find(".//channel/item")  # Son güncelleme
 
-        # Tweet'leri bulma (Nitter sayfasındaki tweet'ler <article> etiketlerinde yer alıyor)
-        tweets = soup.find_all('article')
-
-        if not tweets:
-            return "Güncellemeler bulunamadı."
-
-        # İlk birkaç tweet'in metinlerini alıyoruz
-        tweet_texts = []
-        for tweet in tweets[:5]:  # İlk 5 tweet'i alıyoruz
-            tweet_content = tweet.find('div', {'class': 'tweet-text'})
-            if tweet_content:
-                tweet_texts.append(tweet_content.get_text())
-
-        # Tweet'leri birleştirerek döndürüyoruz
-        return "\n\n".join(tweet_texts)
+        if latest_item is not None:
+            tweet_title = latest_item.find("title").text
+            tweet_link = latest_item.find("link").text
+            return tweet_title, tweet_link
+        else:
+            return "Güncellemeler bulunamadı.", None
 
     except requests.RequestException as e:
-        return f"Twitter'dan veri çekme hatası: {e}"
+        return f"Twitter'dan veri çekme hatası: {e}", None
 
     except Exception as e:
-        return f"Bir hata oluştu: {e}"
+        return f"Bir hata oluştu: {e}", None
