@@ -57,6 +57,7 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     
     if user_id not in user_info:
         await update.message.reply_text('Lütfen önce kanal bilgilerini girin.')
+        print(f"[Uyarı] Kullanıcı {user_id} kanal bilgilerini girmeden işlem yapmaya çalıştı.")
         return
 
     source_channel = user_info[user_id]['source_channel']
@@ -66,44 +67,55 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if update.message.chat.id != int(source_channel):  # source_channel ID'si doğrulanır
         return  # Eğer kaynaktan gelmiyorsa, işlem yapılmaz
 
-    # Bilgilendirme mesajını güncelleyelim
+    # Bilgilendirme mesajını hedef kanalda göndermek
     informative_message = (
-        f"Heyy! {source_channel} kanalında yeni güncellemeler paylaşıldı.\n"
-        f"Lütfen kontrol ediniz: {source_channel}\n"
-        f"🔔 *Yeni güncellemeleri kaçırmayın!*\n\n"
-        f"👉 {source_channel} kanalına göz atmak için tıklayın!"
+        f"🔔 *Önemli Güncelleme!* 🔔\n\n"
+        f"Hey, {target_channel} kanalımızda yeni bir güncelleme paylaşıldı! 📢\n\n"
+        f"👉 *{source_channel} kanalına göz atmak için tıklayın!* 👈\n\n"
+        f"💥 *Yeni içeriği kaçırmayın!*\n\n"
+        f"💬 *Mesajın içeriği şu şekilde:*"
     )
 
-    # Mesajı gönderirken parse_mode='MarkdownV2' kullanarak özel karakterleri kaçırıyoruz
     informative_message_escaped = informative_message.replace("!", "\!").replace("(", "").replace(")", "").replace("_", "\_").replace("*", "\*").replace("[", "").replace("]", "").replace("`", "\`")
 
     try:
+        # Bilgilendirme mesajını hedef kanala gönder
         await context.bot.send_message(target_channel, informative_message_escaped, parse_mode="MarkdownV2")
+        print(f"[Bilgi] Bilgilendirme mesajı {target_channel} kanalına başarıyla gönderildi.")
     except BadRequest as e:
         await update.message.reply_text(f"Bir hata oluştu: {e}")
+        print(f"[Hata] Bilgilendirme mesajı gönderilemedi: {e}")
     
     # Metin mesajını hedef kanala ilet
     if update.message.text:
         try:
             await context.bot.send_message(target_channel, update.message.text)
+            print(f"[Bilgi] Metin mesajı {target_channel} kanalına başarıyla iletildi.")
         except BadRequest as e:
             await update.message.reply_text(f"Bir hata oluştu: {e}")
+            print(f"[Hata] Metin mesajı gönderilemedi: {e}")
     
     # Fotoğraf, video, dosya gibi medya mesajlarını ilet
     if update.message.photo:
         try:
             await context.bot.send_photo(target_channel, update.message.photo[-1].file_id, caption=update.message.caption)
+            print(f"[Bilgi] Fotoğraf mesajı {target_channel} kanalına başarıyla iletildi.")
         except BadRequest as e:
             await update.message.reply_text(f"Bir hata oluştu: {e}")
+            print(f"[Hata] Fotoğraf mesajı gönderilemedi: {e}")
     
     if update.message.video:
         try:
             await context.bot.send_video(target_channel, update.message.video.file_id, caption=update.message.caption)
+            print(f"[Bilgi] Video mesajı {target_channel} kanalına başarıyla iletildi.")
         except BadRequest as e:
             await update.message.reply_text(f"Bir hata oluştu: {e}")
+            print(f"[Hata] Video mesajı gönderilemedi: {e}")
     
     if update.message.document:
         try:
             await context.bot.send_document(target_channel, update.message.document.file_id)
+            print(f"[Bilgi] Doküman mesajı {target_channel} kanalına başarıyla iletildi.")
         except BadRequest as e:
             await update.message.reply_text(f"Bir hata oluştu: {e}")
+            print(f"[Hata] Doküman mesajı gönderilemedi: {e}")
