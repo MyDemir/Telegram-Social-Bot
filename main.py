@@ -21,7 +21,7 @@ def main() -> None:
     application.add_handler(CommandHandler("set_channels", set_channels))
     
     # Text ve medya mesajlarını alıyoruz, fakat komutları hariç tutuyoruz
-    application.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, forward_content))
+    application.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, forward_messages))  # Hata burada düzeltildi!
 
     # Botu çalıştır
     application.run_polling()
