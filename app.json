@@ -1,0 +1,40 @@
+{
+  "name": "Telegram Social Bot",
+  "description": "A Telegram bot to track tweets and forward content to channels.",
+  "repository": "https://github.com/MyDemir/Telegram-Social-Bot",
+  "logo": "https://link_to_your_logo_image.com/logo.png",
+  "keywords": ["telegram", "bot", "social media", "twitter"],
+  "env": {
+    "API_KEY": {
+      "description": "Your Twitter API key",
+      "required": true
+    },
+    "API_SECRET_KEY": {
+      "description": "Your Twitter API secret key",
+      "required": true
+    },
+    "ACCESS_TOKEN": {
+      "description": "Your Twitter access token",
+      "required": true
+    },
+    "ACCESS_TOKEN_SECRET": {
+      "description": "Your Twitter access token secret",
+      "required": true
+    },
+    "TELEGRAM_BOT_TOKEN": {
+      "description": "Your Telegram bot token",
+      "required": true
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "free"
+    }
+  }
+}
