@@ -21,14 +21,17 @@ USER_INFO_FILE = "user_info.json"
 
 # Tweepy API nesnesi
 def create_api():
-    auth = tweepy.OAuthHandler(API_KEY, API_SECRET_KEY)
-    auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
-    api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
-    return api
+    try:
+        auth = tweepy.OAuthHandler(API_KEY, API_SECRET_KEY)
+        auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+        api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
+        
+        # API bağlantısı başarılı ise logla
+        print("Twitter API'ye başarılı bir şekilde bağlanıldı.")
+        return api
+    except Exception as e:
+        print(f"API bağlantısı başarısız: {e}")
     
-api = create_api()
-print(api.me())  # Bu, sizin Twitter profilinizin bilgilerini döndürecektir.
-
 # Kullanıcı bilgilerini yükle
 def load_user_info():
     if os.path.exists(USER_INFO_FILE):
