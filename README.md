@@ -7,7 +7,7 @@ Bu proje, Telegram botu ile sosyal medya platformlarından veri çekmek ve Teleg
 Aşağıdaki bağlantıya tıklayarak projeyi Heroku'ya kolayca deploy edebilirsiniz:
 
 
-[Heroku ile Deploy Et](https://heroku.com/deploy?template=https://github.com/MyDemir/Telegram-Social-Bot)
+[Heroku ile Deploy Et](https://heroku.com/deploy?template=https://github.com/MyDemir/Telegram-Social-Bot/main)
 
 ### Adımlar:
 1. Yukarıdaki bağlantıya tıklayın.
