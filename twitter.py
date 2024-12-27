@@ -25,6 +25,9 @@ def create_api():
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
     api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
     return api
+    
+api = create_api()
+print(api.me())  # Bu, sizin Twitter profilinizin bilgilerini döndürecektir.
 
 # Kullanıcı bilgilerini yükle
 def load_user_info():
