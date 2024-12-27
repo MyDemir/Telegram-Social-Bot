@@ -51,6 +51,28 @@ async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     else:
         await update.message.reply_text("Lütfen iki kanal adı girin. Örnek: /set_channels @kaynakkanal @hedefkanal")
 
+# Twitter kullanıcı adı ekleme komutu
+async def add_twitter_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user_input = update.message.text.strip().split()
+
+    if len(user_input) == 2 and user_input[0] == '/add_twitter':
+        twitter_username = user_input[1].lstrip('@')  # @ işaretini kaldır
+        
+        # Mevcut kullanıcı bilgilerini yükle
+        user_data = load_user_info()
+
+        if twitter_username in user_data:
+            await update.message.reply_text(f"{twitter_username} zaten takip ediliyor.")
+        else:
+            user_data[twitter_username] = {
+                "last_tweet_id": None,
+                "chat_id": update.message.chat.id
+            }
+            save_user_info(user_data)
+            await update.message.reply_text(f"{twitter_username} takip listesine eklendi.")
+    else:
+        await update.message.reply_text("Lütfen bir Twitter kullanıcı adı girin. Örnek: /add_twitter @elonmusk")
+
 # Kanal ID'si alma
 async def get_channel_id(context, username):
     try:
