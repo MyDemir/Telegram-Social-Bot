@@ -8,11 +8,6 @@ Aşağıdaki bağlantıya tıklayarak projeyi Heroku'ya kolayca deploy edebilirs
 
 <p><a href="https://heroku.com/deploy?template=https://github.com/MyDemir/Telegram-Social-Bot"> <img src="https://img.shields.io/badge/Deploy%20To%20Heroku-red?style=for-the-badge&logo=heroku" width="220" height="38.45"/></a></p>
 
-The easiest way to deploy this bot is using Heroku. 
-Don't forget to switch on the bot under "Resources" panel. See example below:<br>
-<p align="center"><img align="center" src="./images/on.png" width="60%" height="60%"></p>
-
-
 ### Adımlar:
 1. Yukarıdaki bağlantıya tıklayın.
 2. `your_api_key`, `your_api_secret_key`, `your_access_token`, `your_access_token_secret` ve `your_telegram_bot_token` gibi alanlara kendi değerlerinizi girin.
