@@ -19,9 +19,17 @@ user_info = load_user_info()
 
 # Start komutu
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    # Kullanıcıya, botun parametrelerini anlatan bir metin gönderiyoruz
     await update.message.reply_text(
         "Merhaba! Bu bot, bir kanalda paylaşılan gönderileri diğer kanala bildirmek için tasarlandı.\n\n"
-        "Kullanım: /set_channels @kaynakkanal @hedefkanal"
+        "Kullanabileceğiniz komutlar:\n\n"
+        "/set_channels @kaynakkanal @hedefkanal - Kaynak ve hedef kanalları ayarlayın.\n"
+        "Bu komut ile bir kaynak kanal ve hedef kanal belirleyebilirsiniz. "
+        "Kaynak kanalda paylaşılan içerikler hedef kanala iletilecektir.\n\n"
+        "/add_twitter @kullaniciadi - Bir Twitter hesabı ekleyin.\n"
+        "Bu komut ile belirli bir Twitter kullanıcısının tweetlerini takip edebilirsiniz. "
+        "Tweet paylaşımı olduğunda hedef kanalda bildirim alırsınız.\n\n"
+        "Başlamak için /set_channels veya /add_twitter komutlarını kullanabilirsiniz."
     )
 
 # Kanal ayarlama komutu
