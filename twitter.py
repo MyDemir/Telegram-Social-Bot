@@ -26,7 +26,7 @@ def create_api():
     logger.info("Twitter API bağlantısı oluşturuluyor...")
     auth = tweepy.OAuthHandler(API_KEY, API_SECRET_KEY)
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
-    api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
+    api = tweepy.API(auth, wait_on_rate_limit=True)  # wait_on_rate_limit_notify kaldırıldı
     logger.info("Twitter API bağlantısı başarılı.")
     return api
 
