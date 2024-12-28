@@ -33,17 +33,25 @@ def create_api():
 def load_user_info():
     logger.info("Kullanıcı bilgileri yükleniyor...")
     if os.path.exists(USER_INFO_FILE):
-        with open(USER_INFO_FILE, "r") as f:
-            data = json.load(f)
-            logger.info(f"Kullanıcı verileri yüklendi: {data}")
-            return data
+        try:
+            with open(USER_INFO_FILE, "r") as f:
+                data = json.load(f)
+                logger.info(f"Kullanıcı verileri yüklendi: {data}")
+                return data
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON okuma hatası: {e}")
+            return {}
     logger.warning("Kullanıcı dosyası bulunamadı.")
     return {}
 
 def save_user_info(data):
     logger.info(f"Kullanıcı verileri kaydediliyor: {data}")
-    with open(USER_INFO_FILE, "w") as f:
-        json.dump(data, f, indent=4)
+    try:
+        with open(USER_INFO_FILE, "w") as f:
+            json.dump(data, f, indent=4)
+        logger.info("Kullanıcı verileri başarıyla kaydedildi.")
+    except Exception as e:
+        logger.error(f"Veri kaydetme hatası: {e}")
 
 def check_tweets_periodically(interval=60):
     api = create_api()
