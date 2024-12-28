@@ -2,32 +2,18 @@ import json
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.error import BadRequest
-import logging
-
-# Logger yapılandırma
-logger = logging.getLogger(__name__)
 
 # Kullanıcı bilgilerini saklayacak JSON dosyasını açma
 def load_user_info():
     try:
         with open("user_info.json", "r") as file:
-            data = json.load(file)
-            logger.info(f"Kullanıcı verileri yüklendi: {data}")
-            return data
+            return json.load(file)
     except FileNotFoundError:
-        logger.warning("Kullanıcı dosyası bulunamadı.")
-        return {}
-    except json.JSONDecodeError as e:
-        logger.error(f"JSON okuma hatası: {e}")
         return {}
 
 def save_user_info(user_info):
-    try:
-        with open("user_info.json", "w") as file:
-            json.dump(user_info, file, indent=4)
-        logger.info("Kullanıcı verileri başarıyla kaydedildi.")
-    except Exception as e:
-        logger.error(f"Veri kaydetme hatası: {e}")
+    with open("user_info.json", "w") as file:
+        json.dump(user_info, file, indent=4)
 
 user_info = load_user_info()
 
@@ -63,7 +49,7 @@ async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                 "source_channel": source_channel_id,
                 "target_channel": target_channel_id
             }
-            save_user_info(user_info)
+            save_user_info(user_info)  # Veriyi kaydediyoruz
             await update.message.reply_text(
                 f"Kanallar ayarlandı!\nKaynak: {source_channel_input} ({source_channel_id})\n"
                 f"Hedef: {target_channel_input} ({target_channel_id})"
@@ -90,7 +76,7 @@ async def add_twitter_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -
                 "last_tweet_id": None,
                 "chat_id": update.message.chat.id
             }
-            save_user_info(user_data)
+            save_user_info(user_data)  # Yeni veriyi kaydediyoruz
             await update.message.reply_text(f"{twitter_username} takip listesine eklendi.")
     else:
         await update.message.reply_text("Lütfen bir Twitter kullanıcı adı girin. Örnek: /add_twitter @elonmusk")
@@ -147,4 +133,4 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             reply_markup=keyboard
         )
     except BadRequest as e:
-        await update.message
+        await update.message.reply_text(f"Bir hata oluştu: {e}")
