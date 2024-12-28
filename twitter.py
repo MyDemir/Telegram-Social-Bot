@@ -31,32 +31,21 @@ def create_api():
     return api
 
 def load_user_info():
-    logger.info("Kullanıcı bilgileri yükleniyor...")
-    if os.path.exists(USER_INFO_FILE):
-        try:
-            with open(USER_INFO_FILE, "r") as f:
-                data = json.load(f)
-                logger.info(f"Kullanıcı verileri yüklendi: {data}")
-                return data
-        except json.JSONDecodeError as e:
-            logger.error(f"JSON okuma hatası: {e}")
-            return {}
-    logger.warning("Kullanıcı dosyası bulunamadı.")
-    return {}
+    try:
+        with open(USER_INFO_FILE, "r") as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return {}
 
 def save_user_info(data):
     logger.info(f"Kullanıcı verileri kaydediliyor: {data}")
-    try:
-        with open(USER_INFO_FILE, "w") as f:
-            json.dump(data, f, indent=4)
-        logger.info("Kullanıcı verileri başarıyla kaydedildi.")
-    except Exception as e:
-        logger.error(f"Veri kaydetme hatası: {e}")
+    with open(USER_INFO_FILE, "w") as f:
+        json.dump(data, f, indent=4)
 
 def check_tweets_periodically(interval=60):
     api = create_api()
     bot = Bot(token=TELEGRAM_BOT_TOKEN)
-    user_data = load_user_info()
+    user_data = load_user_info()  # Kullanıcı verilerini alıyoruz
 
     while True:
         logger.info("Tweet kontrolü başlatıldı...")
@@ -71,7 +60,7 @@ def check_tweets_periodically(interval=60):
 
                     if last_checked_tweet_id is None or latest_tweet.id_str != last_checked_tweet_id:
                         user_data[username]["last_tweet_id"] = latest_tweet.id_str
-                        save_user_info(user_data)
+                        save_user_info(user_data)  # Yeni tweet ID'si kaydediliyor
                         send_telegram_notification(bot, info["chat_id"], username, latest_tweet)
                     else:
                         logger.info(f"{username} için yeni tweet yok.")
