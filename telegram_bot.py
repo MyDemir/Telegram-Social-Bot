@@ -2,18 +2,32 @@ import json
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.error import BadRequest
+import logging
+
+# Logger yapılandırma
+logger = logging.getLogger(__name__)
 
 # Kullanıcı bilgilerini saklayacak JSON dosyasını açma
 def load_user_info():
     try:
         with open("user_info.json", "r") as file:
-            return json.load(file)
+            data = json.load(file)
+            logger.info(f"Kullanıcı verileri yüklendi: {data}")
+            return data
     except FileNotFoundError:
+        logger.warning("Kullanıcı dosyası bulunamadı.")
+        return {}
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON okuma hatası: {e}")
         return {}
 
 def save_user_info(user_info):
-    with open("user_info.json", "w") as file:
-        json.dump(user_info, file, indent=4)
+    try:
+        with open("user_info.json", "w") as file:
+            json.dump(user_info, file, indent=4)
+        logger.info("Kullanıcı verileri başarıyla kaydedildi.")
+    except Exception as e:
+        logger.error(f"Veri kaydetme hatası: {e}")
 
 user_info = load_user_info()
 
@@ -133,4 +147,4 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             reply_markup=keyboard
         )
     except BadRequest as e:
-        await update.message.reply_text(f"Bir hata oluştu: {e}")
+        await update.message
