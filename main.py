@@ -23,6 +23,7 @@ def main() -> None:
     # Kanal mesajlarını dinleme
     application.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, forward_content))
 
+    # Uygulamayı çalıştırma
     application.run_polling()
 
 if __name__ == "__main__":
