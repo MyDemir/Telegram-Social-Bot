@@ -1,5 +1,7 @@
 import tweepy
 import time
+from telegram.ext import ContextTypes
+from telegram import Update
 
 # Twitter API bağlantısını kurma
 def create_twitter_api():
@@ -7,8 +9,8 @@ def create_twitter_api():
     auth.set_access_token('ACCESS_TOKEN', 'ACCESS_TOKEN_SECRET')
     return tweepy.API(auth)
 
-# Twitter API'yi kullanarak tweet kontrolü
-async def check_twitter_for_new_tweets(context):
+# Yeni tweet olup olmadığını kontrol etme
+async def check_twitter_for_new_tweets(context: ContextTypes.DEFAULT_TYPE) -> None:
     api = create_twitter_api()
     user_data = load_user_info()  # Kullanıcı verilerini yükle
 
@@ -29,3 +31,7 @@ async def check_twitter_for_new_tweets(context):
                 await send_telegram_notification(context, info['chat_id'], username, latest_tweet)
             else:
                 pass
+
+# Periyodik kontrol için kullanılan fonksiyon
+async def start_twitter_check(context: ContextTypes.DEFAULT_TYPE) -> None:
+    await check_twitter_for_new_tweets(context)  # Tweet kontrolünü başlat
