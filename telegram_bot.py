@@ -2,6 +2,7 @@ import json
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.error import BadRequest
+from twitter import send_tweet_to_channel  # twitter.py'dan fonksiyon import et
 
 # Kullanıcı bilgilerini saklayacak JSON dosyasını açma
 def load_user_info():
@@ -75,7 +76,8 @@ async def add_twitter_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         else:
             user_data[twitter_username] = {
                 "last_tweet_id": None,
-                "chat_id": update.message.chat.id
+                "chat_id": update.message.chat.id,
+                "twitter_username": twitter_username  # Twitter kullanıcı adını ekliyoruz
             }
             save_user_info(user_data)  # Yeni veriyi kaydediyoruz
             await update.message.reply_text(f"{twitter_username} takip listesine eklendi.")
@@ -135,3 +137,13 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         )
     except BadRequest as e:
         await update.message.reply_text(f"Bir hata oluştu: {e}")
+
+# Twitter kontrolü ve son tweet gönderimi
+async def check_and_send_tweets(update, context):
+    user_info = load_user_info()
+    for user_id, info in user_info.items():
+        if "twitter_username" in info:
+            twitter_username = info["twitter_username"]
+            target_channel = info["target_channel"]
+            # Son tweet'i kontrol et ve hedef kanala gönder
+            await send_tweet_to_channel(update, context, twitter_username, target_channel)
