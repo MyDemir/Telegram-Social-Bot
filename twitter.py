@@ -10,7 +10,7 @@ from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 load_dotenv()
 
 # Logger yapılandırma
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Twitter API anahtarlarını al
@@ -64,6 +64,8 @@ def check_tweets_periodically(interval=60):
                         send_telegram_notification(bot, info["chat_id"], username, latest_tweet)
                     else:
                         logger.info(f"{username} için yeni tweet yok.")
+                else:
+                    logger.info(f"{username} için tweet bulunamadı.")
             except tweepy.TweepError as e:
                 logger.error(f"{username} için hata oluştu: {e}")
 
@@ -77,13 +79,16 @@ def send_telegram_notification(bot, chat_id, username, tweet):
         [[InlineKeyboardButton("Tweeti Görüntüle", url=tweet_url)]]
     )
 
-    bot.send_message(
-        chat_id=chat_id,
-        text=f"🔔 @{username} yeni bir tweet attı:\n\n{tweet_text}",
-        reply_markup=keyboard
-    )
-    logger.info(f"{username} kullanıcısının tweet'i Telegram'a gönderildi.")
+    try:
+        bot.send_message(
+            chat_id=chat_id,
+            text=f"🔔 @{username} yeni bir tweet attı:\n\n{tweet_text}",
+            reply_markup=keyboard
+        )
+        logger.info(f"{username} kullanıcısının tweet'i Telegram'a gönderildi.")
+    except Exception as e:
+        logger.error(f"Telegram'a mesaj gönderilirken hata oluştu: {e}")
     
 if __name__ == "__main__":
     logger.info("Bot başlatılıyor...")
-    check_tweets
+    check_tweets_periodically()
