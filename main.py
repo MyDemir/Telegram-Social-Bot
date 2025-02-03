@@ -1,7 +1,8 @@
 import os
 from dotenv import load_dotenv
-from telegram_bot import start, set_channels, forward_content, add_twitter_user
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
+from telegram_bot import start, set_channels, forward_content, add_twitter_user
+from twitter import start_twitter_check
 
 # .env dosyasını yükleme
 load_dotenv()
@@ -12,7 +13,7 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 if not TELEGRAM_BOT_TOKEN:
     raise ValueError("Bot tokeni bulunamadı. Lütfen .env dosyasına TELEGRAM_BOT_TOKEN ekleyin.")
 
-def main() -> None:
+async def main() -> None:
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
     # Komutlar
@@ -23,8 +24,12 @@ def main() -> None:
     # Kanal mesajlarını dinleme
     application.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, forward_content))
 
+    # Botu periyodik tweet kontrolü ile başlatın
+    application.job_queue.run_repeating(start_twitter_check, interval=60, first=0)
+
     # Uygulamayı çalıştırma
-    application.run_polling()
+    await application.run_polling()
 
 if __name__ == "__main__":
-    main()
+    import asyncio
+    asyncio.run(main())
