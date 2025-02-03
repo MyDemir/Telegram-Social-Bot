@@ -19,16 +19,11 @@ user_info = load_user_info()
 
 # Start komutu
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    # Kullanıcıya, botun parametrelerini anlatan bir metin gönderiyoruz
     await update.message.reply_text(
         "Merhaba! Bu bot, bir kanalda paylaşılan gönderileri diğer kanala bildirmek için tasarlandı.\n\n"
         "Kullanabileceğiniz komutlar:\n\n"
         "/set_channels @kaynakkanal @hedefkanal - Kaynak ve hedef kanalları ayarlayın.\n"
-        "Bu komut ile bir kaynak kanal ve hedef kanal belirleyebilirsiniz. "
-        "Kaynak kanalda paylaşılan içerikler hedef kanala iletilecektir.\n\n"
         "/add_twitter @kullaniciadi - Bir Twitter hesabı ekleyin.\n"
-        "Bu komut ile belirli bir Twitter kullanıcısının tweetlerini takip edebilirsiniz. "
-        "Tweet paylaşımı olduğunda hedef kanalda bildirim alırsınız.\n\n"
         "Başlamak için /set_channels veya /add_twitter komutlarını kullanabilirsiniz."
     )
 
@@ -45,11 +40,17 @@ async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         target_channel_id = await get_channel_id(context, target_channel_input)
 
         if source_channel_id and target_channel_id:
-            user_info[user_id] = {
-                "source_channel": source_channel_id,
-                "target_channel": target_channel_id
-            }
+            # Mevcut kullanıcı bilgilerini alıyoruz
+            user_info = load_user_info()
+
+            # Kullanıcı ID'sine göre kanalları kaydediyoruz
+            if user_id not in user_info:
+                user_info[user_id] = {}
+
+            user_info[user_id]["source_channel"] = source_channel_id
+            user_info[user_id]["target_channel"] = target_channel_id
             save_user_info(user_info)  # Veriyi kaydediyoruz
+
             await update.message.reply_text(
                 f"Kanallar ayarlandı!\nKaynak: {source_channel_input} ({source_channel_id})\n"
                 f"Hedef: {target_channel_input} ({target_channel_id})"
