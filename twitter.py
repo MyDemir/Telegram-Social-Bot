@@ -1,4 +1,4 @@
-import tweepy
+'''import tweepy
 import os
 import json
 import time
@@ -87,3 +87,50 @@ def send_telegram_notification(bot, chat_id, username, tweet):
 if __name__ == "__main__":
     logger.info("Bot başlatılıyor...")
     check_tweets_periodically()
+'''
+import tweepy
+import os
+from dotenv import load_dotenv
+
+# .env dosyasını yükleme
+load_dotenv()
+
+# Twitter API anahtarlarını yükleme
+CONSUMER_KEY = os.getenv('TWITTER_CONSUMER_KEY')
+CONSUMER_SECRET = os.getenv('TWITTER_CONSUMER_SECRET')
+ACCESS_TOKEN = os.getenv('TWITTER_ACCESS_TOKEN')
+ACCESS_TOKEN_SECRET = os.getenv('TWITTER_ACCESS_TOKEN_SECRET')
+
+# Twitter API'ye bağlanma
+def get_twitter_api():
+    auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
+    auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+    api = tweepy.API(auth)
+    return api
+
+# Twitter kullanıcısının son tweet'ini al
+def get_last_tweet(twitter_username):
+    api = get_twitter_api()
+    try:
+        tweets = api.user_timeline(screen_name=twitter_username, count=1, tweet_mode="extended")
+        if tweets:
+            return tweets[0].full_text
+        else:
+            return None
+    except tweepy.TweepError as e:
+        print(f"Hata: {e}")
+        return None
+
+# Son tweet'i hedef kanala gönderme
+async def send_tweet_to_channel(update, context, twitter_username, target_channel):
+    tweet = get_last_tweet(twitter_username)
+    if tweet:
+        try:
+            await context.bot.send_message(
+                chat_id=target_channel,
+                text=f"Yeni tweet: {tweet}\n\n@{twitter_username} tarafından paylaşıldı.",
+            )
+        except Exception as e:
+            await update.message.reply_text(f"Bir hata oluştu: {e}")
+    else:
+        await update.message.reply_text("Tweet alınamadı.")
