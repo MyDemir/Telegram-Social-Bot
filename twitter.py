@@ -10,7 +10,7 @@ from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 load_dotenv()
 
 # Logger yapılandırma
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # Twitter API anahtarlarını al
@@ -86,4 +86,4 @@ def send_telegram_notification(bot, chat_id, username, tweet):
     
 if __name__ == "__main__":
     logger.info("Bot başlatılıyor...")
-    check_tweets_periodically()
+    check_tweets
