@@ -1,4 +1,5 @@
 import json
+import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.error import BadRequest
@@ -23,12 +24,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "Merhaba! Bu bot, bir kanalda paylaşılan gönderileri diğer kanala bildirmek için tasarlandı.\n\n"
         "Kullanabileceğiniz komutlar:\n\n"
         "/set_channels @kaynakkanal @hedefkanal - Kaynak ve hedef kanalları ayarlayın.\n"
-        "Bu komut ile bir kaynak kanal ve hedef kanal belirleyebilirsiniz. "
-        "Kaynak kanalda paylaşılan içerikler hedef kanala iletilecektir.\n\n"
-        "/add_twitter @kullaniciadi - Bir Twitter hesabı ekleyin.\n"
-        "Bu komut ile belirli bir Twitter kullanıcısının tweetlerini takip edebilirsiniz. "
-        "Tweet paylaşımı olduğunda hedef kanalda bildirim alırsınız.\n\n"
-        "Başlamak için /set_channels veya /add_twitter komutlarını kullanabilirsiniz."
+        "/add_twitter @kullaniciadi - Bir Twitter hesabı ekleyin."
     )
 
 # Kanal ayarlama komutu
@@ -50,11 +46,10 @@ async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             }
             save_user_info(user_info)  # Veriyi kaydediyoruz
             await update.message.reply_text(
-                f"Kanallar ayarlandı!\nKaynak: {source_channel_input} ({source_channel_id})\n"
-                f"Hedef: {target_channel_input} ({target_channel_id})"
+                f"Kanallar ayarlandı!\nKaynak: {source_channel_input}\nHedef: {target_channel_input}"
             )
         else:
-            await update.message.reply_text("Kanal bilgileri doğrulanamadı. Lütfen kullanıcı adını kontrol edin.")
+            await update.message.reply_text("Kanal bilgileri doğrulanamadı.")
     else:
         await update.message.reply_text("Lütfen iki kanal adı girin. Örnek: /set_channels @kaynakkanal @hedefkanal")
 
@@ -63,9 +58,8 @@ async def add_twitter_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     user_input = update.message.text.strip().split()
 
     if len(user_input) == 2 and user_input[0] == '/add_twitter':
-        twitter_username = user_input[1].lstrip('@')  # @ işaretini kaldır
+        twitter_username = user_input[1].lstrip('@')
         
-        # Mevcut kullanıcı bilgilerini yükle
         user_data = load_user_info()
 
         if twitter_username in user_data:
@@ -88,48 +82,10 @@ async def get_channel_id(context, username):
     except Exception as e:
         return None
 
-# Admin kontrolü
-async def is_user_admin(context, chat_id, user_id):
-    try:
-        chat_member = await context.bot.get_chat_member(chat_id, user_id)
-        return chat_member.status in ['administrator', 'creator']
-    except Exception as e:
-        return False
-
-# Mesajları yönlendirmek yerine bilgilendirme mesajı gönder
-async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not update.message:
-        return  # Mesaj yoksa çık
-
-    user_id = update.message.from_user.id
-    chat_id = update.message.chat.id
-
-    source_channel = None
-    target_channel = None
-    for info in user_info.values():
-        if info['source_channel'] == chat_id:
-            source_channel = info['source_channel']
-            target_channel = info['target_channel']
-            break
-
-    if source_channel is None or target_channel is None:
-        return
-    
-    is_admin = await is_user_admin(context, source_channel, user_id)
-    
-    if not is_admin:
-        return
-    
-    source_channel_link = f"https://t.me/{update.message.chat.username}" if update.message.chat.username else "Kanalı Görüntüle"
-    keyboard = InlineKeyboardMarkup(
-        [[InlineKeyboardButton("Kanala Git", url=source_channel_link)]]
-    )
-    
-    try:
-        await context.bot.send_message(
-            chat_id=target_channel,
-            text="🔔 Yeni içerik var! Kaynak kanala göz atın! 🔔",
-            reply_markup=keyboard
-        )
-    except BadRequest as e:
+# Twitter'dan gelen tweetleri kontrol etme
+async def start_twitter_check():
+    user_data = load_user_info()
+    for twitter_username, data in user_data.items():
+        # Burada Twitter API kullanılarak tweet kontrolü yapılabilir
+        # Örneğin: tweetler kontrol edilecek ve yeni tweet varsa bildirim yapılacak
         pass
