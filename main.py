@@ -1,4 +1,5 @@
 import os
+from twitter import start_twitter_check
 from dotenv import load_dotenv
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
 from telegram_bot import start, set_channels, forward_content, add_twitter_user
