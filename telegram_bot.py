@@ -2,7 +2,7 @@ import json
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.error import BadRequest
-from twitter import send_tweet_to_channel  # twitter.py'dan fonksiyon import et
+from twitter import send_tweet_to_channel
 
 # Kullanıcı bilgilerini saklayacak JSON dosyasını açma
 def load_user_info():
