@@ -3,7 +3,7 @@ import asyncio
 from dotenv import load_dotenv
 from telegram_bot import start, set_channels, forward_content, add_twitter_user
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
-from twitter import send_tweet_to_channel
+from twitter import start_twitter_check_periodically
 
 # .env dosyasını yükleme
 load_dotenv()
@@ -13,17 +13,6 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 
 if not TELEGRAM_BOT_TOKEN:
     raise ValueError("Bot tokeni bulunamadı. Lütfen .env dosyasına TELEGRAM_BOT_TOKEN ekleyin.")
-
-async def start_twitter_check_periodically(update, context):
-    while True:
-        user_info = load_user_info()
-        for user_id, info in user_info.items():
-            if "twitter_username" in info:
-                twitter_username = info["twitter_username"]
-                target_channel = info["target_channel"]
-                # Son tweet'i kontrol et ve hedef kanala gönder
-                await send_tweet_to_channel(update, context, twitter_username, target_channel)
-        await asyncio.sleep(1800)  # 30 dakika bekle
 
 async def main() -> None:
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
@@ -37,7 +26,8 @@ async def main() -> None:
     application.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, forward_content))
 
     # Asenkron işlemi başlat
-    asyncio.create_task(start_twitter_check_periodically())  # Twitter kontrolünü başlat
+    # Twitter kontrolünü başlatıyoruz
+    application.job_queue.run_repeating(start_twitter_check_periodically, interval=60, first=0)
 
     # Uygulamayı çalıştır
     await application.run_polling()
