@@ -47,4 +47,5 @@ async def main() -> None:
     await application.run_polling()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    # Bu satırı kaldırıyoruz çünkü application.run_polling() kendi event loop'unu yönetiyor
+    asyncio.run(main())  # Burayı kaldırarak hatayı engellemiş olduk
