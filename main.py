@@ -205,4 +205,7 @@ async def main() -> None:
     await application.run_polling()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    # asyncio.run() yerine, mevcut loop'u kullanıyoruz.
+    loop = asyncio.get_event_loop()
+    loop.create_task(main())
+    loop.run_forever()
