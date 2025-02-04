@@ -2,6 +2,7 @@ import os
 import logging
 import json
 import asyncio
+import nest_asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Bot
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 from telegram.error import BadRequest
@@ -184,4 +185,5 @@ async def main() -> None:
     await application.run_polling()
 
 if __name__ == "__main__":
+    nest_asyncio.apply()
     asyncio.run(main())
