@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import json
 import asyncio
 from telegram import Bot
+from telegram.ext import Application, CommandHandler, MessageHandler, filters
 
 # .env dosyasını yükleyin
 load_dotenv()
@@ -82,6 +83,17 @@ async def start_twitter_check_periodically():
         await start_twitter_check()  # Twitter kontrol fonksiyonunu çalıştır
         await asyncio.sleep(60)  # 60 saniyede bir kontrol et
 
-# Asenkron fonksiyonun başlatılması
+# Telegram Botunuzu başlatan asenkron fonksiyon
+async def main():
+    # Telegram uygulamanızı başlatıyoruz
+    application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+    
+    # Burada, bot'un arka planda çalışacak asenkron işlemleri başlatıyoruz
+    asyncio.create_task(start_twitter_check_periodically())  # Twitter kontrolünü başlat
+
+    # Botu sürekli dinlemesi için polling işlemini başlatıyoruz
+    await application.run_polling()
+
+# main fonksiyonunu başlatıyoruz
 if __name__ == "__main__":
-    asyncio.run(start_twitter_check_periodically())
+    asyncio.run(main())  # main fonksiyonunu asyncio ile başlatıyoruz
