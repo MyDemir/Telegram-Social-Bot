@@ -1,7 +1,6 @@
 import os
 import tweepy
 from dotenv import load_dotenv
-import time
 import json
 import asyncio
 from telegram import Bot
@@ -48,10 +47,10 @@ def check_twitter_user(twitter_username):
         return None
 
 # Tweet bildirimini gönderme
-def send_tweet_notification(tweet, chat_id):
+async def send_tweet_notification(tweet, chat_id):
     tweet_url = f"https://twitter.com/{tweet.user.screen_name}/status/{tweet.id}"
     text = f"Yeni tweet! 🐦\n\n{tweet.full_text}\n\n🔗 [Tweeti Görüntüle]({tweet_url})"
-    bot.send_message(chat_id=chat_id, text=text, parse_mode="Markdown", disable_web_page_preview=True)
+    await bot.send_message(chat_id=chat_id, text=text, parse_mode="Markdown", disable_web_page_preview=True)
 
 # Kullanıcı bilgilerini güncelleme
 def update_user_info(user_info):
@@ -59,7 +58,7 @@ def update_user_info(user_info):
         json.dump(user_info, file, indent=4)
 
 # Twitter'dan gelen tweet'leri kontrol etme ve hedef kanala gönderme
-def start_twitter_check():
+async def start_twitter_check():
     user_info = load_user_info()
     
     for twitter_username, data in user_info.items():
@@ -71,15 +70,14 @@ def start_twitter_check():
             
             if last_tweet_id != tweet.id:
                 # Eğer tweet yeni ise, bildirimi gönderiyoruz
-                send_tweet_notification(tweet, data["chat_id"])
+                await send_tweet_notification(tweet, data["chat_id"])
                 
                 # Kullanıcı bilgilerini güncelliyoruz
                 data["last_tweet_id"] = tweet.id
                 update_user_info(user_info)
-        time.sleep(60)  # 1 dakika beklemeden sonra kontrol et
 
 # Asenkron olarak Twitter kontrolü başlatma
 async def start_twitter_check_periodically():
     while True:
-        start_twitter_check()  # Twitter kontrol fonksiyonunu çalıştır
+        await start_twitter_check()  # Twitter kontrol fonksiyonunu çalıştır
         await asyncio.sleep(60)  # 60 saniye bekle
