@@ -15,6 +15,7 @@ if not TELEGRAM_BOT_TOKEN:
     raise ValueError("Bot tokeni bulunamadı. Lütfen .env dosyasına TELEGRAM_BOT_TOKEN ekleyin.")
 
 async def main() -> None:
+    # JobQueue kullanabilmek için ApplicationBuilder'dan botu başlatıyoruz
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
     # Komutlar
@@ -25,8 +26,7 @@ async def main() -> None:
     # Kanal mesajlarını dinleme
     application.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, forward_content))
 
-    # Asenkron işlemi başlat
-    # Twitter kontrolünü başlatıyoruz
+    # Twitter kontrolünü başlatıyoruz (her 60 saniyede bir)
     application.job_queue.run_repeating(start_twitter_check_periodically, interval=60, first=0)
 
     # Uygulamayı çalıştır
