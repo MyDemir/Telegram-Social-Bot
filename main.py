@@ -44,14 +44,25 @@ def save_user_info(user_info):
 async def start_twitter_check(context: ContextTypes.DEFAULT_TYPE):
     user_info = load_user_info()
     for twitter_username, data in user_info.items():
-        tweets = api.user_timeline(screen_name=twitter_username, count=1, tweet_mode="extended")
-        if tweets:
-            tweet = tweets[0]
-            last_tweet_id = data.get("last_tweet_id")
-            if last_tweet_id != tweet.id:
-                await send_tweet_notification(tweet, data["chat_id"])
-                data["last_tweet_id"] = tweet.id
-                save_user_info(user_info)
+        try:
+            tweets = api.user_timeline(screen_name=twitter_username, count=1, tweet_mode="extended")
+            if tweets:
+                tweet = tweets[0]
+                last_tweet_id = data.get("last_tweet_id")
+                if last_tweet_id != tweet.id:
+                    await send_tweet_notification(tweet, data["chat_id"])
+                    data["last_tweet_id"] = tweet.id
+                    save_user_info(user_info)
+            else:
+                logger.info(f"{twitter_username} için yeni tweet bulunamadı.")
+        except tweepy.TweepError as e:
+            if e.api_code == 89:  # Invalid or expired token
+                logger.error(f"{twitter_username} için token geçersiz veya süresi dolmuş: {e}")
+                # Burada tokenları yenileme işlemi başlatabilirsiniz, ancak v1.1 için bu mümkün değil.
+            else:
+                logger.error(f"{twitter_username} için Twitter'dan tweet çekerken hata: {e}")
+        except Exception as e:
+            logger.error(f"{twitter_username} için genel hata: {e}")
 
 async def send_tweet_notification(tweet, chat_id):
     tweet_url = f"https://twitter.com/{tweet.user.screen_name}/status/{tweet.id}"
