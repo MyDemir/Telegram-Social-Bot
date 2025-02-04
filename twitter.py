@@ -2,17 +2,18 @@ import os
 import tweepy
 from dotenv import load_dotenv
 import time
+import json
+import asyncio
 from telegram import Bot
-from telegram.ext import Updater
 
 # .env dosyasını yükleyin
 load_dotenv()
 
 # Twitter API Anahtarlarını alıyoruz
-TWITTER_API_KEY = os.getenv('TWITTER_API_KEY')
-TWITTER_API_SECRET_KEY = os.getenv('TWITTER_API_SECRET_KEY')
-TWITTER_ACCESS_TOKEN = os.getenv('TWITTER_ACCESS_TOKEN')
-TWITTER_ACCESS_TOKEN_SECRET = os.getenv('TWITTER_ACCESS_TOKEN_SECRET')
+TWITTER_API_KEY = os.getenv('API_KEY')
+TWITTER_API_SECRET_KEY = os.getenv('API_SECRET_KEY')
+TWITTER_ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
+TWITTER_ACCESS_TOKEN_SECRET = os.getenv('ACCESS_TOKEN_SECRET')
 
 # Telegram Bot Token'ı
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
@@ -77,7 +78,7 @@ def start_twitter_check():
                 update_user_info(user_info)
         time.sleep(60)  # 1 dakika beklemeden sonra kontrol et
 
-# Asenkron olarak  Twitter kontrolü başlatma
+# Asenkron olarak Twitter kontrolü başlatma
 async def start_twitter_check_periodically():
     while True:
         start_twitter_check()  # Twitter kontrol fonksiyonunu çalıştır
