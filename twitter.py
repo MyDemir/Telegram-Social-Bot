@@ -80,4 +80,3 @@ async def start_twitter_check():
 async def start_twitter_check_periodically():
     while True:
         await start_twitter_check()  # Twitter kontrol fonksiyonunu çalıştır
-        await asyncio.sleep(60)  # 60 saniye bekle
