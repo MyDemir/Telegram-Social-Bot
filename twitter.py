@@ -33,6 +33,11 @@ def load_user_info():
     except FileNotFoundError:
         return {}
 
+# Kullanıcı bilgilerini güncelleme
+def update_user_info(user_info):
+    with open("user_info.json", "w") as file:
+        json.dump(user_info, file, indent=4)
+
 # Twitter kullanıcısının son tweet'lerini kontrol etme
 def check_twitter_user(twitter_username):
     try:
@@ -51,11 +56,6 @@ async def send_tweet_notification(tweet, chat_id):
     tweet_url = f"https://twitter.com/{tweet.user.screen_name}/status/{tweet.id}"
     text = f"Yeni tweet! 🐦\n\n{tweet.full_text}\n\n🔗 [Tweeti Görüntüle]({tweet_url})"
     await bot.send_message(chat_id=chat_id, text=text, parse_mode="Markdown", disable_web_page_preview=True)
-
-# Kullanıcı bilgilerini güncelleme
-def update_user_info(user_info):
-    with open("user_info.json", "w") as file:
-        json.dump(user_info, file, indent=4)
 
 # Twitter'dan gelen tweet'leri kontrol etme ve hedef kanala gönderme
 async def start_twitter_check():
@@ -76,7 +76,12 @@ async def start_twitter_check():
                 data["last_tweet_id"] = tweet.id
                 update_user_info(user_info)
 
-# Asenkron olarak Twitter kontrolü başlatma
+# Asenkron olarak Twitter kontrolünü belirli aralıklarla başlatma
 async def start_twitter_check_periodically():
     while True:
         await start_twitter_check()  # Twitter kontrol fonksiyonunu çalıştır
+        await asyncio.sleep(60)  # 60 saniyede bir kontrol et
+
+# Asenkron fonksiyonun başlatılması
+if __name__ == "__main__":
+    asyncio.run(start_twitter_check_periodically())
