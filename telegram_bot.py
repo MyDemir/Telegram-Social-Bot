@@ -1,4 +1,4 @@
-import json
+get_channelimport json
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.error import BadRequest
