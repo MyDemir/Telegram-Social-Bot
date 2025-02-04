@@ -48,7 +48,7 @@ def check_twitter_user(twitter_username):
         return None
 
 # Tweet bildirimini gönderme
-def send_tweet_notification(tweet, chat_id):
+def send_tweet_to_channel(tweet, chat_id):
     tweet_url = f"https://twitter.com/{tweet.user.screen_name}/status/{tweet.id}"
     text = f"Yeni tweet! 🐦\n\n{tweet.full_text}\n\n🔗 [Tweeti Görüntüle]({tweet_url})"
     bot.send_message(chat_id=chat_id, text=text, parse_mode="Markdown", disable_web_page_preview=True)
@@ -71,7 +71,7 @@ def start_twitter_check():
             
             if last_tweet_id != tweet.id:
                 # Eğer tweet yeni ise, bildirimi gönderiyoruz
-                send_tweet_notification(tweet, data["chat_id"])
+                send_tweet_to_channel(tweet, data["chat_id"])
                 
                 # Kullanıcı bilgilerini güncelliyoruz
                 data["last_tweet_id"] = tweet.id
