@@ -16,8 +16,6 @@ def save_user_info(user_info):
     with open("user_info.json", "w") as file:
         json.dump(user_info, file, indent=4)
 
-user_info = load_user_info()
-
 # Start komutu
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
@@ -41,8 +39,7 @@ async def set_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         target_channel_id = await get_channel_id(context, target_channel_input)
 
         if source_channel_id and target_channel_id:
-            # Mevcut kullanıcı bilgilerini alıyoruz
-            user_info = load_user_info()
+            user_info = load_user_info()  # Kullanıcı bilgilerini yükle
 
             # Kullanıcı ID'sine göre kanalları kaydediyoruz
             if user_id not in user_info:
@@ -110,7 +107,7 @@ async def forward_content(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     source_channel = None
     target_channel = None
-    for info in user_info.values():
+    for info in load_user_info().values():  # Kullanıcı bilgilerini tekrar yüklüyoruz
         if info['source_channel'] == chat_id:
             source_channel = info['source_channel']
             target_channel = info['target_channel']
