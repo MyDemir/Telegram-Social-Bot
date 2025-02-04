@@ -4,5 +4,5 @@ beautifulsoup4==4.12.2
 python-telegram-bot==20.1
 python-telegram-bot[job-queue]
 python-dotenv==0.21.0
-tweepy
+tweepy==4.15
 nest_asyncio
