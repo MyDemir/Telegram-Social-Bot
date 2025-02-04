@@ -2,7 +2,7 @@ import json
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.error import BadRequest
-from twitter import send_tweet_to_channel
+from twitter import send_tweet_notification
 
 # Kullanıcı bilgilerini saklayacak JSON dosyasını açma
 def load_user_info():
@@ -146,4 +146,4 @@ async def check_and_send_tweets(update, context):
             twitter_username = info["twitter_username"]
             target_channel = info["target_channel"]
             # Son tweet'i kontrol et ve hedef kanala gönder
-            await send_tweet_to_channel(update, context, twitter_username, target_channel)
+            await send_tweet_notification(update, context, twitter_username, target_channel)
